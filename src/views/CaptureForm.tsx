@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 
-type CaptureType = "idea" | "inbox" | "task";
+export type CaptureType = "idea" | "inbox" | "task";
 
 interface Props {
   onCapture: (text: string, type: CaptureType) => void;
