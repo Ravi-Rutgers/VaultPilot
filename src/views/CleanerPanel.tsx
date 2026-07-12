@@ -99,9 +99,9 @@ export function CleanerPanel({ app, settings }: Props) {
               {meta.label} ({items.length})
             </div>
             <div className="bg-gray-800 rounded overflow-hidden">
-              {items.map((issue, i) => (
+              {items.map((issue) => (
                 <div
-                  key={i}
+                  key={`${issue.type}-${issue.file.path}-${issue.details}`}
                   className="px-3 py-2 border-b border-gray-700 last:border-0 cursor-pointer hover:bg-gray-700"
                   onClick={() =>
                     app.workspace.openLinkText(issue.file.basename, "", false)
