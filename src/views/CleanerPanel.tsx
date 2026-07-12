@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { App } from "obsidian";
+import { App, Notice } from "obsidian";
 import { VaultPilotSettings } from "../settings/settings";
 import { CleanerIssue } from "../types";
 import {
@@ -32,18 +32,13 @@ export function CleanerPanel({ app, settings }: Props) {
         ...detectOrphanInboxItems(allFiles, settings.inboxFolder, settings.orphanThresholdDays),
       ];
 
-      // Broken links via metadataCache unresolvedLinks
       const unresolvedLinks = app.metadataCache.unresolvedLinks;
       for (const [sourcePath, links] of Object.entries(unresolvedLinks)) {
         const file = app.vault.getFileByPath(sourcePath);
         if (!file) continue;
         for (const linkText of Object.keys(links)) {
           if ((links as Record<string, number>)[linkText] > 0) {
-            found.push({
-              type: "broken-link",
-              file,
-              details: `[[${linkText}]]`,
-            });
+            found.push({ type: "broken-link", file, details: `[[${linkText}]]` });
           }
         }
       }
@@ -51,6 +46,16 @@ export function CleanerPanel({ app, settings }: Props) {
       setIssues(found);
     } finally {
       setScanning(false);
+    }
+  };
+
+  const deleteFile = async (issue: CleanerIssue) => {
+    try {
+      await app.vault.delete(issue.file);
+      setIssues((prev) => prev?.filter((i) => i.file.path !== issue.file.path) ?? null);
+      new Notice(`🗑️ ${issue.file.basename} verwijderd`);
+    } catch (e) {
+      new Notice(`❌ Verwijderen mislukt: ${(e as Error).message}`);
     }
   };
 
@@ -102,13 +107,24 @@ export function CleanerPanel({ app, settings }: Props) {
               {items.map((issue) => (
                 <div
                   key={`${issue.type}-${issue.file.path}-${issue.details}`}
-                  className="px-3 py-2 border-b border-gray-700 last:border-0 cursor-pointer hover:bg-gray-700"
-                  onClick={() =>
-                    app.workspace.openLinkText(issue.file.basename, "", false)
-                  }
+                  className="px-3 py-2 border-b border-gray-700 last:border-0 flex items-center justify-between hover:bg-gray-700"
                 >
-                  <div className="font-medium truncate">{issue.file.basename}</div>
-                  <div className="text-xs text-gray-500">{issue.details}</div>
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer"
+                    onClick={() => app.workspace.openLinkText(issue.file.basename, "", false)}
+                  >
+                    <div className="font-medium truncate">{issue.file.basename}</div>
+                    <div className="text-xs text-gray-500">{issue.details}</div>
+                  </div>
+                  {type === "empty" && (
+                    <button
+                      className="ml-2 shrink-0 px-2 py-0.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded"
+                      onClick={(e) => { e.stopPropagation(); deleteFile(issue); }}
+                      title="Verwijder dit lege bestand"
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

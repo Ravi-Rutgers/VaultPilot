@@ -2,6 +2,7 @@ import { ItemView, WorkspaceLeaf } from "obsidian";
 import { createRoot, Root } from "react-dom/client";
 import { createElement } from "react";
 import { DashboardPanel } from "./DashboardPanel";
+import { CaptureModal } from "./CaptureModal";
 import VaultPilotPlugin from "../main";
 
 export const VIEW_TYPE_DASHBOARD = "vaultpilot-dashboard";
@@ -36,6 +37,7 @@ export class DashboardView extends ItemView {
       createElement(DashboardPanel, {
         app: this.app,
         settings: this.plugin.settings,
+        onOpenCapture: () => new CaptureModal(this.app, this.plugin.settings).open(),
       })
     );
   }

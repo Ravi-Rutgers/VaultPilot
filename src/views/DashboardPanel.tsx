@@ -12,6 +12,7 @@ import { parseOpenTasks } from "../core/taskParser";
 interface Props {
   app: App;
   settings: VaultPilotSettings;
+  onOpenCapture: () => void;
 }
 
 interface DashboardData {
@@ -21,7 +22,7 @@ interface DashboardData {
   recentFiles: TFile[];
 }
 
-export function DashboardPanel({ app, settings }: Props) {
+export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
@@ -64,20 +65,36 @@ export function DashboardPanel({ app, settings }: Props) {
     };
   }, [app, settings]);
 
-  if (!data) {
-    return (
-      <div className="p-4 text-gray-400">
-        Laden...
-      </div>
+  const openInbox = () => {
+    const explorer = (app as any).internalPlugins?.plugins?.["file-explorer"];
+    const folder = app.vault.getAbstractFileByPath(
+      settings.inboxFolder.replace(/\/$/, "")
     );
+    if (explorer && folder) {
+      explorer.instance?.revealInFolder(folder);
+    }
+  };
+
+  if (!data) {
+    return <div className="p-4 text-gray-400">Laden...</div>;
   }
 
   return (
     <div className="p-3 text-sm">
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-xs text-gray-500 uppercase tracking-wider">VaultPilot</span>
+        <button
+          onClick={onOpenCapture}
+          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500"
+        >
+          + Vastleggen
+        </button>
+      </div>
+
       <div className="grid grid-cols-3 gap-2 mb-4">
         <StatCard label="Projecten" value={data.activeProjects.length} color="blue" />
         <StatCard label="Open taken" value={data.openTaskCount} color="red" />
-        <StatCard label="Inbox" value={data.inboxCount} color="green" />
+        <StatCard label="Inbox" value={data.inboxCount} color="green" onClick={openInbox} />
       </div>
 
       <Section title="Actieve Projecten">
@@ -108,10 +125,23 @@ export function DashboardPanel({ app, settings }: Props) {
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: "blue" | "red" | "green" }) {
+function StatCard({
+  label,
+  value,
+  color,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  color: "blue" | "red" | "green";
+  onClick?: () => void;
+}) {
   const colors = { blue: "text-blue-400", red: "text-red-400", green: "text-green-400" };
   return (
-    <div className="bg-gray-800 rounded p-2 text-center">
+    <div
+      className={`bg-gray-800 rounded p-2 text-center ${onClick ? "cursor-pointer hover:bg-gray-700" : ""}`}
+      onClick={onClick}
+    >
       <div className={`text-xl font-bold ${colors[color]}`}>{value}</div>
       <div className="text-xs text-gray-400">{label}</div>
     </div>
