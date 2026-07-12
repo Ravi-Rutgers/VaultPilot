@@ -116,11 +116,11 @@ export function CleanerPanel({ app, settings }: Props) {
                     <div className="font-medium truncate">{issue.file.basename}</div>
                     <div className="text-xs text-gray-500">{issue.details}</div>
                   </div>
-                  {type === "empty" && (
+                  {(type === "empty" || type === "orphan") && (
                     <button
                       className="ml-2 shrink-0 px-2 py-0.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-900/30 rounded"
                       onClick={(e) => { e.stopPropagation(); deleteFile(issue); }}
-                      title="Verwijder dit lege bestand"
+                      title="Verwijder dit bestand"
                     >
                       🗑️
                     </button>

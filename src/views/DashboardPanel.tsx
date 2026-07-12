@@ -22,6 +22,12 @@ interface DashboardData {
   recentFiles: TFile[];
 }
 
+function getProjectName(file: TFile, projectsFolder: string): string | null {
+  const rel = file.path.slice(projectsFolder.length);
+  const parts = rel.split("/");
+  return parts.length > 0 ? parts[0] : null;
+}
+
 export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
 
@@ -65,21 +71,15 @@ export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
     };
   }, [app, settings]);
 
-  const openInbox = () => {
+  const revealFolder = (folderPath: string) => {
     const explorer = (app as any).internalPlugins?.plugins?.["file-explorer"];
-    const folder = app.vault.getAbstractFileByPath(
-      settings.inboxFolder.replace(/\/$/, "")
-    );
-    if (explorer && folder) {
-      explorer.instance?.revealInFolder(folder);
-    }
+    const folder = app.vault.getAbstractFileByPath(folderPath.replace(/\/$/, ""));
+    if (explorer && folder) explorer.instance?.revealInFolder(folder);
   };
 
   const openOpenTasks = () => {
     const search = (app as any).internalPlugins?.plugins?.["global-search"];
-    if (search) {
-      search.instance?.openGlobalSearch('task-todo:""');
-    }
+    if (search) search.instance?.openGlobalSearch('task-todo:""');
   };
 
   if (!data) {
@@ -99,9 +99,14 @@ export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-4">
-        <StatCard label="Projecten" value={data.activeProjects.length} color="blue" />
+        <StatCard
+          label="Projecten"
+          value={data.activeProjects.length}
+          color="blue"
+          onClick={() => revealFolder(settings.projectsFolder)}
+        />
         <StatCard label="Open taken" value={data.openTaskCount} color="red" onClick={openOpenTasks} />
-        <StatCard label="Inbox" value={data.inboxCount} color="green" onClick={openInbox} />
+        <StatCard label="Inbox" value={data.inboxCount} color="green" onClick={() => revealFolder(settings.inboxFolder)} />
       </div>
 
       <Section title="Actieve Projecten">
@@ -119,14 +124,17 @@ export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
       </Section>
 
       <Section title="Recent Gewijzigd">
-        {data.recentFiles.map((f) => (
-          <FileRow
-            key={f.path}
-            label={f.basename}
-            sub={timeSince(f.stat.mtime)}
-            onClick={() => app.workspace.openLinkText(f.basename, "", false)}
-          />
-        ))}
+        {data.recentFiles.map((f) => {
+          const project = getProjectName(f, settings.projectsFolder);
+          return (
+            <FileRow
+              key={f.path}
+              label={f.basename}
+              sub={project ? `${project} · ${timeSince(f.stat.mtime)}` : timeSince(f.stat.mtime)}
+              onClick={() => app.workspace.openLinkText(f.basename, "", false)}
+            />
+          );
+        })}
       </Section>
     </div>
   );
