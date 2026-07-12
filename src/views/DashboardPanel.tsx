@@ -75,6 +75,13 @@ export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
     }
   };
 
+  const openOpenTasks = () => {
+    const search = (app as any).internalPlugins?.plugins?.["global-search"];
+    if (search) {
+      search.instance?.openGlobalSearch('task-todo:""');
+    }
+  };
+
   if (!data) {
     return <div className="p-4 text-gray-400">Laden...</div>;
   }
@@ -93,7 +100,7 @@ export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
 
       <div className="grid grid-cols-3 gap-2 mb-4">
         <StatCard label="Projecten" value={data.activeProjects.length} color="blue" />
-        <StatCard label="Open taken" value={data.openTaskCount} color="red" />
+        <StatCard label="Open taken" value={data.openTaskCount} color="red" onClick={openOpenTasks} />
         <StatCard label="Inbox" value={data.inboxCount} color="green" onClick={openInbox} />
       </div>
 
