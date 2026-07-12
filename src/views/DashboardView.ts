@@ -28,8 +28,9 @@ export class DashboardView extends ItemView {
   }
 
   async onOpen() {
-    const container = this.containerEl.children[1] as HTMLElement;
+    const container = this.contentEl;
     container.empty();
+    container.id = "vaultpilot-root";
     this.root = createRoot(container);
     this.root.render(
       createElement(DashboardPanel, {

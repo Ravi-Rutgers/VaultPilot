@@ -24,48 +24,56 @@ interface DashboardData {
 export function DashboardPanel({ app, settings }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
 
-  const load = async () => {
-    const allFiles = app.vault.getMarkdownFiles();
-    const projectFiles = filterProjectFiles(allFiles, settings.projectsFolder);
-    const caches = projectFiles.map((f) => ({
-      file: f,
-      frontmatter: app.metadataCache.getFileCache(f)?.frontmatter ?? {},
-    }));
-    const activeProjects = filterActiveProjects(projectFiles, caches);
-
-    const projectAllFiles = allFiles.filter((f) =>
-      f.path.startsWith(settings.projectsFolder)
-    );
-    let totalTasks = 0;
-    for (const file of projectAllFiles) {
-      const content = await app.vault.read(file);
-      totalTasks += parseOpenTasks(content, file).length;
-    }
-
-    const inboxCount = allFiles.filter((f) =>
-      f.path.startsWith(settings.inboxFolder)
-    ).length;
-    const recentFiles = getRecentFiles(allFiles, 5);
-
-    setData({ activeProjects, openTaskCount: totalTasks, inboxCount, recentFiles });
-  };
-
   useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      const allFiles = app.vault.getMarkdownFiles();
+      const projectFiles = filterProjectFiles(allFiles, settings.projectsFolder);
+      const caches = projectFiles.map((f) => ({
+        file: f,
+        frontmatter: app.metadataCache.getFileCache(f)?.frontmatter ?? {},
+      }));
+      const activeProjects = filterActiveProjects(projectFiles, caches);
+
+      let totalTasks = 0;
+      for (const file of projectFiles) {
+        try {
+          const content = await app.vault.read(file);
+          totalTasks += parseOpenTasks(content, file).length;
+        } catch {
+          // file may have been deleted between listing and reading
+        }
+      }
+
+      const inboxCount = allFiles.filter((f) =>
+        f.path.startsWith(settings.inboxFolder)
+      ).length;
+      const recentFiles = getRecentFiles(allFiles, 5);
+
+      if (!cancelled) {
+        setData({ activeProjects, openTaskCount: totalTasks, inboxCount, recentFiles });
+      }
+    };
+
     load();
     const ref = app.vault.on("modify", load);
-    return () => app.vault.offref(ref);
-  }, []);
+    return () => {
+      cancelled = true;
+      app.vault.offref(ref);
+    };
+  }, [app, settings]);
 
   if (!data) {
     return (
-      <div id="vaultpilot-root" className="p-4 text-gray-400">
+      <div className="p-4 text-gray-400">
         Laden...
       </div>
     );
   }
 
   return (
-    <div id="vaultpilot-root" className="p-3 text-sm">
+    <div className="p-3 text-sm">
       <div className="grid grid-cols-3 gap-2 mb-4">
         <StatCard label="Projecten" value={data.activeProjects.length} color="blue" />
         <StatCard label="Open taken" value={data.openTaskCount} color="red" />
@@ -134,6 +142,7 @@ function FileRow({ label, sub, onClick }: { label: string; sub?: string; onClick
 function timeSince(mtime: number): string {
   const diff = Date.now() - mtime;
   const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "zojuist";
   if (minutes < 60) return `${minutes}m geleden`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}u geleden`;
