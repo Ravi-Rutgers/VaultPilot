@@ -50,7 +50,7 @@ export default class VaultPilotPlugin extends Plugin {
     });
   }
 
-  async onunload() {
+  onunload() {
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_DASHBOARD);
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_CLEANER);
   }
@@ -71,8 +71,8 @@ export default class VaultPilotPlugin extends Plugin {
     if (leaves.length > 0) {
       leaf = leaves[0];
     } else {
-      leaf = workspace.getRightLeaf(false);
-      if (leaf) await leaf.setViewState({ type: viewType, active: true });
+      leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf(true);
+      await leaf.setViewState({ type: viewType, active: true });
     }
 
     if (leaf) workspace.revealLeaf(leaf);
