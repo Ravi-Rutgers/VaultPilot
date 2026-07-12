@@ -1,0 +1,10 @@
+{
+  "id": "vaultpilot",
+  "name": "VaultPilot",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "De cockpit voor je Obsidian vault — dashboard, quick capture en vault cleaner.",
+  "author": "ravir",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
