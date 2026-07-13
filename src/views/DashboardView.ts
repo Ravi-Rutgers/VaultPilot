@@ -21,19 +21,15 @@ export class DashboardView extends ItemView {
   getIcon() { return "layout-dashboard"; }
 
   async onOpen() {
-    this.mount();
-  }
-
-  rerender() {
-    this.mount();
-  }
-
-  private mount() {
     const container = this.contentEl;
     container.empty();
     container.id = "vaultpilot-root";
-    if (!this.root) this.root = createRoot(container);
-    this.root.render(
+    this.root = createRoot(container);
+    this.rerender();
+  }
+
+  rerender() {
+    this.root?.render(
       createElement(DashboardPanel, {
         app: this.app,
         settings: this.plugin.settings,
