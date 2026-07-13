@@ -8,11 +8,19 @@ import {
   getRecentFiles,
 } from "../core/scanner";
 import { parseOpenTasks } from "../core/taskParser";
+import { Suggestion } from "../core/fastConnect";
+import { FastConnectPanel } from "./FastConnectPanel";
 
 interface Props {
   app: App;
   settings: VaultPilotSettings;
   onOpenCapture: () => void;
+  suggestions: Suggestion[];
+  isAnalyzing: boolean;
+  analyzeProgress: number;
+  onAnalyzeNow: () => void;
+  onApplySuggestions: (ids: string[]) => Promise<void>;
+  onRejectAllSuggestions: () => void;
 }
 
 interface DashboardData {
@@ -28,8 +36,21 @@ function getProjectName(file: TFile, projectsFolder: string): string | null {
   return parts.length > 0 ? parts[0] : null;
 }
 
-export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
+export function DashboardPanel({
+  app,
+  settings,
+  onOpenCapture,
+  suggestions,
+  isAnalyzing,
+  analyzeProgress,
+  onAnalyzeNow,
+  onApplySuggestions,
+  onRejectAllSuggestions,
+}: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [showFastConnect, setShowFastConnect] = useState(false);
+
+  const pendingCount = suggestions.filter((s) => s.status === "pending").length;
 
   useEffect(() => {
     let cancelled = false;
@@ -49,7 +70,7 @@ export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
           const content = await app.vault.read(file);
           totalTasks += parseOpenTasks(content, file).length;
         } catch {
-          // file may have been deleted between listing and reading
+          // bestand kan verwijderd zijn tussen listing en lezen
         }
       }
 
@@ -136,6 +157,54 @@ export function DashboardPanel({ app, settings, onOpenCapture }: Props) {
           );
         })}
       </Section>
+
+      <Section title="⚡ Fast Connect">
+        <div className="px-3 py-2 flex items-center justify-between">
+          <span className="text-xs text-gray-400">
+            {isAnalyzing
+              ? `Analyseren... ${analyzeProgress}%`
+              : pendingCount > 0
+              ? `${pendingCount} suggestie${pendingCount !== 1 ? "s" : ""} klaar`
+              : "Geen openstaande suggesties"}
+          </span>
+          <div className="flex gap-2">
+            {pendingCount > 0 && (
+              <button
+                onClick={() => setShowFastConnect(true)}
+                className="text-xs px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white rounded"
+              >
+                Bekijk ({pendingCount})
+              </button>
+            )}
+            <button
+              onClick={() => { onAnalyzeNow(); setShowFastConnect(true); }}
+              disabled={isAnalyzing}
+              className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-200 rounded"
+            >
+              {isAnalyzing ? "Bezig..." : "Analyseer nu"}
+            </button>
+          </div>
+        </div>
+      </Section>
+
+      {showFastConnect && (
+        <FastConnectPanel
+          app={app}
+          suggestions={suggestions}
+          isAnalyzing={isAnalyzing}
+          analyzeProgress={analyzeProgress}
+          hasGroqKey={!!settings.groqApiKey}
+          onAnalyzeNow={onAnalyzeNow}
+          onApply={async (ids) => {
+            await onApplySuggestions(ids);
+            if (suggestions.filter((s) => s.status === "pending").length === 0) {
+              setShowFastConnect(false);
+            }
+          }}
+          onRejectAll={() => { onRejectAllSuggestions(); setShowFastConnect(false); }}
+          onClose={() => setShowFastConnect(false)}
+        />
+      )}
     </div>
   );
 }
