@@ -4,6 +4,7 @@ import { VaultPilotSettingsTab } from "./settings/SettingsTab";
 import { DashboardView, VIEW_TYPE_DASHBOARD } from "./views/DashboardView";
 import { CleanerView, VIEW_TYPE_CLEANER } from "./views/CleanerView";
 import { KanbanView, VIEW_TYPE_KANBAN } from "./views/KanbanView";
+import { SmartGraphView, VIEW_TYPE_GRAPH } from "./views/SmartGraphView";
 import { CaptureModal } from "./views/CaptureModal";
 
 export default class VaultPilotPlugin extends Plugin {
@@ -23,6 +24,10 @@ export default class VaultPilotPlugin extends Plugin {
     this.registerView(
       VIEW_TYPE_KANBAN,
       (leaf) => new KanbanView(leaf, this)
+    );
+    this.registerView(
+      VIEW_TYPE_GRAPH,
+      (leaf) => new SmartGraphView(leaf, this)
     );
 
     this.addRibbonIcon("layout-dashboard", "VaultPilot Dashboard", () => {
@@ -48,6 +53,12 @@ export default class VaultPilotPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: "open-graph",
+      name: "Open Smart Graph",
+      callback: () => this.activateView(VIEW_TYPE_GRAPH),
+    });
+
+    this.addCommand({
       id: "quick-capture",
       name: "Quick Capture",
       hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "c" }],
@@ -65,6 +76,7 @@ export default class VaultPilotPlugin extends Plugin {
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_DASHBOARD);
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_CLEANER);
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_KANBAN);
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_GRAPH);
   }
 
   async loadSettings() {
