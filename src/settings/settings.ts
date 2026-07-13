@@ -3,6 +3,7 @@ export interface VaultPilotSettings {
   inboxFolder: string;
   ideasFolder: string;
   orphanThresholdDays: number;
+  groqApiKey: string;
 }
 
 export const DEFAULT_SETTINGS: VaultPilotSettings = {
@@ -10,4 +11,5 @@ export const DEFAULT_SETTINGS: VaultPilotSettings = {
   inboxFolder: "inbox/",
   ideasFolder: "ideas/",
   orphanThresholdDays: 30,
+  groqApiKey: "",
 };

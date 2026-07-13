@@ -63,5 +63,20 @@ export class VaultPilotSettingsTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           })
       );
+
+    new Setting(containerEl)
+      .setName("Groq API-sleutel")
+      .setDesc("Vereist voor AI-analyse in Fast Connect. Gratis te verkrijgen op console.groq.com")
+      .addText((text) => {
+        text
+          .setPlaceholder("gsk_...")
+          .setValue(this.plugin.settings.groqApiKey)
+          .onChange(async (value) => {
+            this.plugin.settings.groqApiKey = value.trim();
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.setAttribute("type", "password");
+        return text;
+      });
   }
 }
