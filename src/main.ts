@@ -211,6 +211,10 @@ export default class VaultPilotPlugin extends Plugin {
     this.refreshDashboard();
   }
 
+  async openView(viewType: string) {
+    await this.activateView(viewType);
+  }
+
   private async activateView(viewType: string) {
     const { workspace } = this.app;
     let leaf: WorkspaceLeaf | null = null;

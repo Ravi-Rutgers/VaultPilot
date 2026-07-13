@@ -34,6 +34,7 @@ export class DashboardView extends ItemView {
         app: this.app,
         settings: this.plugin.settings,
         onOpenCapture: () => new CaptureModal(this.app, this.plugin.settings).open(),
+        onOpenView: (viewId: string) => this.plugin.openView(viewId),
         suggestions: this.plugin.suggestions,
         isAnalyzing: this.plugin.isAnalyzing,
         analyzeProgress: this.plugin.analyzeProgress,

@@ -15,6 +15,7 @@ interface Props {
   app: App;
   settings: VaultPilotSettings;
   onOpenCapture: () => void;
+  onOpenView: (viewId: string) => void;
   suggestions: Suggestion[];
   isAnalyzing: boolean;
   analyzeProgress: number;
@@ -40,6 +41,7 @@ export function DashboardPanel({
   app,
   settings,
   onOpenCapture,
+  onOpenView,
   suggestions,
   isAnalyzing,
   analyzeProgress,
@@ -117,6 +119,24 @@ export function DashboardPanel({
         >
           + Vastleggen
         </button>
+      </div>
+
+      {/* Navigatie naar andere views */}
+      <div className="grid grid-cols-3 gap-1 mb-4">
+        {[
+          { id: "vaultpilot-smart-graph", icon: "🕸", label: "Graph" },
+          { id: "vaultpilot-kanban", icon: "📋", label: "Kanban" },
+          { id: "vaultpilot-cleaner", icon: "🧹", label: "Cleaner" },
+        ].map(({ id, icon, label }) => (
+          <button
+            key={id}
+            onClick={() => onOpenView(id)}
+            className="flex flex-col items-center gap-0.5 py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-300 transition-colors"
+          >
+            <span className="text-base leading-none">{icon}</span>
+            <span>{label}</span>
+          </button>
+        ))}
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-4">
