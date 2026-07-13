@@ -2,3 +2,7 @@ node_modules
 main.js
 styles/output.css
 .DS_Store
+.env
+.env.*
+*.env
+data.json

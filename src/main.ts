@@ -1,5 +1,8 @@
 import { Plugin, WorkspaceLeaf } from "obsidian";
 import { DEFAULT_SETTINGS, VaultPilotSettings } from "./settings/settings";
+import { getSupabase, signOut } from "./core/supabaseClient";
+import { LoginModal } from "./views/LoginModal";
+import { Session } from "@supabase/supabase-js";
 import { VaultPilotSettingsTab } from "./settings/SettingsTab";
 import { DashboardView, VIEW_TYPE_DASHBOARD } from "./views/DashboardView";
 import { CleanerView, VIEW_TYPE_CLEANER } from "./views/CleanerView";
@@ -111,7 +114,15 @@ export default class VaultPilotPlugin extends Plugin {
       }
     );
 
-    this.app.workspace.onLayoutReady(() => {
+    this.app.workspace.onLayoutReady(async () => {
+      // Herstel Supabase sessie als er een opgeslagen token is
+      if (this.settings.accessToken && this.settings.refreshToken) {
+        await getSupabase().auth.setSession({
+          access_token: this.settings.accessToken,
+          refresh_token: this.settings.refreshToken,
+        });
+      }
+
       this.activateView(VIEW_TYPE_DASHBOARD);
       this.backgroundAnalyzer?.start();
     });
@@ -221,6 +232,39 @@ export default class VaultPilotPlugin extends Plugin {
       if (s.status === "pending") s.status = "rejected";
     }
     this.saveSuggestions(this.suggestions);
+    this.refreshDashboard();
+  }
+
+  get isLoggedIn(): boolean {
+    return !!this.settings.accessToken && !!this.settings.userEmail;
+  }
+
+  openLoginModal() {
+    const vaultName = this.app.vault.getName();
+    new LoginModal(this.app, vaultName, async (session: Session, vaultId: string) => {
+      this.settings.userEmail = session.user.email ?? "";
+      this.settings.vaultId = vaultId;
+      this.settings.accessToken = session.access_token;
+      this.settings.refreshToken = session.refresh_token;
+      await this.saveSettings();
+
+      // Herstel sessie in Supabase client
+      await getSupabase().auth.setSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+
+      this.refreshDashboard();
+    }).open();
+  }
+
+  async logout() {
+    await signOut();
+    this.settings.userEmail = "";
+    this.settings.vaultId = "";
+    this.settings.accessToken = "";
+    this.settings.refreshToken = "";
+    await this.saveSettings();
     this.refreshDashboard();
   }
 

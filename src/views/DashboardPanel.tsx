@@ -16,6 +16,10 @@ interface Props {
   settings: VaultPilotSettings;
   onOpenCapture: () => void;
   onOpenView: (viewId: string) => void;
+  isLoggedIn: boolean;
+  userEmail: string;
+  onLogin: () => void;
+  onLogout: () => void;
   suggestions: Suggestion[];
   isAnalyzing: boolean;
   analyzeProgress: number;
@@ -49,6 +53,10 @@ export function DashboardPanel({
   settings,
   onOpenCapture,
   onOpenView,
+  isLoggedIn,
+  userEmail,
+  onLogin,
+  onLogout,
   suggestions,
   isAnalyzing,
   analyzeProgress,
@@ -193,6 +201,24 @@ export function DashboardPanel({
           <span className="text-gray-500 font-mono text-[10px]">⌃⇧F</span>
         </button>
       </div>
+
+      {/* Auth status */}
+      {isLoggedIn ? (
+        <div className="flex items-center justify-between px-3 py-1.5 mb-3 bg-green-900 rounded text-xs">
+          <span className="text-green-300">✓ {userEmail}</span>
+          <button onClick={onLogout} className="text-green-500 hover:text-red-400 transition-colors">
+            Uitloggen
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={onLogin}
+          className="w-full mb-3 flex items-center justify-center gap-2 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-600 hover:border-blue-500 rounded text-xs text-gray-400 hover:text-blue-300 transition-colors"
+        >
+          <span>🔗</span>
+          <span>Verbinden met VaultPilot Pro</span>
+        </button>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 mb-4">
