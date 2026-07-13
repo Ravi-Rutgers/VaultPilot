@@ -25,9 +25,7 @@ export default class VaultPilotPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
-    // Laad opgeslagen suggesties
-    const saved = await this.loadData();
-    this.suggestions = saved?.suggestions ?? [];
+    // Suggesties worden geladen in loadSettings()
 
     this.registerView(
       VIEW_TYPE_DASHBOARD,
@@ -95,7 +93,7 @@ export default class VaultPilotPlugin extends Plugin {
       () => this.suggestions,
       (s) => {
         this.suggestions = s;
-        this.saveData({ suggestions: s });
+        this.saveSuggestions(s);
         this.refreshDashboard();
       }
     );
@@ -115,11 +113,19 @@ export default class VaultPilotPlugin extends Plugin {
   }
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = await this.loadData() ?? {};
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
+    this.suggestions = data.suggestions ?? [];
   }
 
   async saveSettings() {
-    await this.saveData(this.settings);
+    const data = await this.loadData() ?? {};
+    await this.saveData({ ...data, ...this.settings });
+  }
+
+  private async saveSuggestions(suggestions: Suggestion[]): Promise<void> {
+    const data = await this.loadData() ?? {};
+    await this.saveData({ ...data, suggestions });
   }
 
   refreshDashboard(): void {
@@ -168,7 +174,7 @@ export default class VaultPilotPlugin extends Plugin {
       );
 
       this.suggestions = deduplicateSuggestions(this.suggestions, aiSuggestions);
-      await this.saveData({ suggestions: this.suggestions });
+      await this.saveSuggestions(this.suggestions);
     }
 
     this.analyzeProgress = 100;
@@ -193,7 +199,7 @@ export default class VaultPilotPlugin extends Plugin {
       } catch { /* bestand verwijderd, overslaan */ }
     }
 
-    await this.saveData({ suggestions: this.suggestions });
+    await this.saveSuggestions(this.suggestions);
     this.refreshDashboard();
   }
 
@@ -201,7 +207,7 @@ export default class VaultPilotPlugin extends Plugin {
     for (const s of this.suggestions) {
       if (s.status === "pending") s.status = "rejected";
     }
-    this.saveData({ suggestions: this.suggestions });
+    this.saveSuggestions(this.suggestions);
     this.refreshDashboard();
   }
 
