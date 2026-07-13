@@ -48,6 +48,11 @@ export function findRuleBasedSuggestions(
       if (isDuplicateLink(sourceFile.path, targetFile.path, resolvedLinks)) continue;
 
       const name = targetFile.basename;
+      // Sla korte namen over — te veel valse positieven
+      if (name.length < 5) continue;
+      // Sla datum-gebaseerde namen over (dagnotities)
+      if (/^\d{1,2}[-–]\d{1,2}[-–]\d{2,4}$/.test(name)) continue;
+
       const wikilinkPattern = new RegExp(`\\[\\[${escapeRegex(name)}(\\|[^\\]]+)?\\]\\]`);
       const mentionPattern = new RegExp(`(?<!\\[\\[)\\b${escapeRegex(name)}\\b(?!\\]\\])`, "i");
 
