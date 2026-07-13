@@ -20,6 +20,16 @@ Scant je vault op problemen: kapotte links, lege notities en verweesde bestanden
 ### Kanban Board
 Bekijk je taken als een visueel kanban-bord. Gebaseerd op je eigen markdown-bestanden — geen externe sync, alles blijft lokaal.
 
+### Fast Connect
+Verbindt alles wat bij elkaar hoort met een paar klikken. Twee analysemodi:
+
+- **Regel-gebaseerd** (draait automatisch elke 30 minuten op de achtergrond) — vindt notities die elkaar bij naam noemen maar nog geen wikilink hebben
+- **AI via Groq** (optioneel, gratis) — analyseert de inhoud van notities semantisch en vindt diepere verbanden
+
+Resultaten verschijnen als suggestielijst in het Dashboard. Hoge-zekerheid items zijn vooraf aangevinkt. Jij beslist wat er wordt toegepast — de plugin schrijft nooit automatisch zonder jouw bevestiging.
+
+Vereist een gratis Groq API-sleutel voor de AI-analyse (in te stellen via Instellingen → VaultPilot).
+
 ### Smart Graph
 Verken je vault als een interactieve kaart met drie tabs:
 
@@ -109,9 +119,11 @@ Het dashboard opent automatisch. Je ziet het VaultPilot-icoon in de zijbalk.
 |-------|--------|
 | Dashboard openen | Klik op het 📊-icoon in de zijbalk |
 | Quick Capture | `Ctrl+Shift+C` |
-| Smart Graph openen | `Ctrl+P` → "VaultPilot: Open Smart Graph" |
-| Vault Cleaner | `Ctrl+P` → "VaultPilot: Scan Vault" |
-| Kanban Board | `Ctrl+P` → "VaultPilot: Open Kanban Board" |
+| Smart Graph openen | Klik 🕸 in Dashboard, of `Ctrl+P` → "Open Smart Graph" |
+| Vault Cleaner | Klik 🧹 in Dashboard, of `Ctrl+P` → "Scan Vault" |
+| Kanban Board | Klik 📋 in Dashboard, of `Ctrl+P` → "Open Kanban Board" |
+| Fast Connect starten | Klik "Analyseer nu" in het Dashboard |
+| Fast Connect bekijken | Klik "Bekijk (X)" in het Dashboard |
 
 ### Smart Graph — tips
 - **Navigeren**: scroll om in/uit te zoomen, sleep om te pannen
