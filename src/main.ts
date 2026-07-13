@@ -51,24 +51,28 @@ export default class VaultPilotPlugin extends Plugin {
     this.addCommand({
       id: "open-dashboard",
       name: "Open Dashboard",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "d" }],
       callback: () => this.activateView(VIEW_TYPE_DASHBOARD),
     });
 
     this.addCommand({
       id: "open-cleaner",
-      name: "Scan Vault (Cleaner)",
+      name: "Vault Cleaner openen",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "v" }],
       callback: () => this.activateView(VIEW_TYPE_CLEANER),
     });
 
     this.addCommand({
       id: "open-kanban",
-      name: "Open Kanban Board",
+      name: "Kanban Board openen",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "k" }],
       callback: () => this.activateView(VIEW_TYPE_KANBAN),
     });
 
     this.addCommand({
       id: "open-graph",
-      name: "Open Smart Graph",
+      name: "Smart Graph openen",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "g" }],
       callback: () => this.activateView(VIEW_TYPE_GRAPH),
     });
 
@@ -82,7 +86,16 @@ export default class VaultPilotPlugin extends Plugin {
     this.addCommand({
       id: "fast-connect-analyze",
       name: "Fast Connect: Analyseer vault",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "f" }],
       callback: () => this.analyzeNow(),
+    });
+
+    this.addCommand({
+      id: "fast-connect-open",
+      name: "Fast Connect: Bekijk suggesties",
+      callback: () => {
+        this.activateView(VIEW_TYPE_DASHBOARD);
+      },
     });
 
     this.addSettingTab(new VaultPilotSettingsTab(this.app, this));

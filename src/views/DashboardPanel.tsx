@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { App, TFile } from "obsidian";
 import { VaultPilotSettings } from "../settings/settings";
 import { ProjectInfo } from "../types";
@@ -29,6 +29,7 @@ interface DashboardData {
   openTaskCount: number;
   inboxCount: number;
   recentFiles: TFile[];
+  allFiles: TFile[];
 }
 
 function getProjectName(file: TFile, projectsFolder: string): string | null {
@@ -36,6 +37,12 @@ function getProjectName(file: TFile, projectsFolder: string): string | null {
   const parts = rel.split("/");
   return parts.length > 0 ? parts[0] : null;
 }
+
+const NAV_ITEMS = [
+  { id: "vaultpilot-smart-graph", icon: "🕸", label: "Graph",   shortcut: "⌃⇧G" },
+  { id: "vaultpilot-kanban",      icon: "📋", label: "Kanban",  shortcut: "⌃⇧K" },
+  { id: "vaultpilot-cleaner",     icon: "🧹", label: "Cleaner", shortcut: "⌃⇧V" },
+];
 
 export function DashboardPanel({
   app,
@@ -51,6 +58,7 @@ export function DashboardPanel({
 }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [showFastConnect, setShowFastConnect] = useState(false);
+  const [query, setQuery] = useState("");
 
   const pendingCount = suggestions.filter((s) => s.status === "pending").length;
 
@@ -71,9 +79,7 @@ export function DashboardPanel({
         try {
           const content = await app.vault.read(file);
           totalTasks += parseOpenTasks(content, file).length;
-        } catch {
-          // bestand kan verwijderd zijn tussen listing en lezen
-        }
+        } catch { /* bestand verwijderd */ }
       }
 
       const inboxCount = allFiles.filter((f) =>
@@ -82,7 +88,7 @@ export function DashboardPanel({
       const recentFiles = getRecentFiles(allFiles, 5);
 
       if (!cancelled) {
-        setData({ activeProjects, openTaskCount: totalTasks, inboxCount, recentFiles });
+        setData({ activeProjects, openTaskCount: totalTasks, inboxCount, recentFiles, allFiles });
       }
     };
 
@@ -93,6 +99,14 @@ export function DashboardPanel({
       app.vault.offref(ref);
     };
   }, [app, settings]);
+
+  const searchResults = useMemo(() => {
+    if (!query.trim() || !data) return [];
+    const q = query.toLowerCase();
+    return data.allFiles
+      .filter((f) => f.basename.toLowerCase().includes(q) || f.path.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [query, data]);
 
   const revealFolder = (folderPath: string) => {
     const explorer = (app as any).internalPlugins?.plugins?.["file-explorer"];
@@ -111,55 +125,103 @@ export function DashboardPanel({
 
   return (
     <div className="p-3 text-sm">
-      <div className="flex justify-between items-center mb-3">
-        <span className="text-xs text-gray-500 uppercase tracking-wider">VaultPilot</span>
-        <button
-          onClick={onOpenCapture}
-          className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500"
-        >
-          + Vastleggen
-        </button>
+
+      {/* Zoekbalk */}
+      <div className="relative mb-3">
+        <input
+          type="text"
+          placeholder="🔍  Zoek in vault..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setQuery("");
+            if (e.key === "Enter" && searchResults.length > 0) {
+              app.workspace.openLinkText(searchResults[0].basename, "", false);
+              setQuery("");
+            }
+          }}
+          className="w-full bg-gray-800 border border-gray-700 focus:border-blue-500 rounded px-3 py-1.5 text-xs text-gray-200 placeholder-gray-500 outline-none"
+        />
+        {searchResults.length > 0 && (
+          <div className="absolute z-10 left-0 right-0 top-full mt-1 bg-gray-800 border border-gray-700 rounded shadow-lg overflow-hidden">
+            {searchResults.map((f) => (
+              <div
+                key={f.path}
+                className="px-3 py-1.5 cursor-pointer hover:bg-gray-700 flex justify-between items-center"
+                onClick={() => { app.workspace.openLinkText(f.basename, "", false); setQuery(""); }}
+              >
+                <span className="text-xs text-gray-200 truncate">{f.basename}</span>
+                <span className="text-xs text-gray-500 ml-2 shrink-0 truncate">{f.path.split("/").slice(0, -1).join("/")}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Navigatie naar andere views */}
-      <div className="grid grid-cols-3 gap-1 mb-4">
-        {[
-          { id: "vaultpilot-smart-graph", icon: "🕸", label: "Graph" },
-          { id: "vaultpilot-kanban", icon: "📋", label: "Kanban" },
-          { id: "vaultpilot-cleaner", icon: "🧹", label: "Cleaner" },
-        ].map(({ id, icon, label }) => (
+      {/* Navigatieknoppen */}
+      <div className="grid grid-cols-3 gap-1 mb-3">
+        {NAV_ITEMS.map(({ id, icon, label, shortcut }) => (
           <button
             key={id}
             onClick={() => onOpenView(id)}
-            className="flex flex-col items-center gap-0.5 py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-300 transition-colors"
+            className="flex flex-col items-center gap-0.5 py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-300 transition-colors group"
           >
             <span className="text-base leading-none">{icon}</span>
-            <span>{label}</span>
+            <span className="font-medium">{label}</span>
+            <span className="text-gray-600 group-hover:text-gray-400 text-[10px] font-mono">{shortcut}</span>
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        <StatCard
-          label="Projecten"
-          value={data.activeProjects.length}
-          color="blue"
-          onClick={() => revealFolder(settings.projectsFolder)}
-        />
-        <StatCard label="Open taken" value={data.openTaskCount} color="red" onClick={openOpenTasks} />
-        <StatCard label="Inbox" value={data.inboxCount} color="green" onClick={() => revealFolder(settings.inboxFolder)} />
+      {/* Quick actions rij */}
+      <div className="grid grid-cols-2 gap-1 mb-4">
+        <button
+          onClick={onOpenCapture}
+          className="flex items-center justify-center gap-1.5 py-1.5 bg-blue-700 hover:bg-blue-600 rounded text-xs text-white transition-colors"
+        >
+          <span>✏️</span>
+          <span>Vastleggen</span>
+          <span className="text-blue-300 font-mono text-[10px]">⌃⇧C</span>
+        </button>
+        <button
+          onClick={() => { onAnalyzeNow(); setShowFastConnect(true); }}
+          disabled={isAnalyzing}
+          className="flex items-center justify-center gap-1.5 py-1.5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 rounded text-xs text-gray-200 transition-colors"
+        >
+          <span>⚡</span>
+          <span>{isAnalyzing ? `${analyzeProgress}%` : "Fast Connect"}</span>
+          <span className="text-gray-500 font-mono text-[10px]">⌃⇧F</span>
+        </button>
       </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <StatCard label="Projecten" value={data.activeProjects.length} color="blue"
+          onClick={() => revealFolder(settings.projectsFolder)} />
+        <StatCard label="Open taken" value={data.openTaskCount} color="red"
+          onClick={openOpenTasks} />
+        <StatCard label="Inbox" value={data.inboxCount} color="green"
+          onClick={() => revealFolder(settings.inboxFolder)} />
+      </div>
+
+      {/* Fast Connect badge */}
+      {pendingCount > 0 && (
+        <button
+          onClick={() => setShowFastConnect(true)}
+          className="w-full mb-3 flex items-center justify-between px-3 py-2 bg-yellow-900 hover:bg-yellow-800 rounded text-xs transition-colors"
+        >
+          <span className="text-yellow-300">⚡ {pendingCount} verbandssuggesties klaar</span>
+          <span className="text-yellow-400">Bekijk →</span>
+        </button>
+      )}
 
       <Section title="Actieve Projecten">
         {data.activeProjects.length === 0 ? (
           <p className="text-gray-500 px-3 py-2">Geen actieve projecten gevonden.</p>
         ) : (
           data.activeProjects.map((p) => (
-            <FileRow
-              key={p.path}
-              label={p.name}
-              onClick={() => app.workspace.openLinkText(p.name, "", false)}
-            />
+            <FileRow key={p.path} label={p.name}
+              onClick={() => app.workspace.openLinkText(p.name, "", false)} />
           ))
         )}
       </Section>
@@ -168,43 +230,11 @@ export function DashboardPanel({
         {data.recentFiles.map((f) => {
           const project = getProjectName(f, settings.projectsFolder);
           return (
-            <FileRow
-              key={f.path}
-              label={f.basename}
+            <FileRow key={f.path} label={f.basename}
               sub={project ? `${project} · ${timeSince(f.stat.mtime)}` : timeSince(f.stat.mtime)}
-              onClick={() => app.workspace.openLinkText(f.basename, "", false)}
-            />
+              onClick={() => app.workspace.openLinkText(f.basename, "", false)} />
           );
         })}
-      </Section>
-
-      <Section title="⚡ Fast Connect">
-        <div className="px-3 py-2 flex items-center justify-between">
-          <span className="text-xs text-gray-400">
-            {isAnalyzing
-              ? `Analyseren... ${analyzeProgress}%`
-              : pendingCount > 0
-              ? `${pendingCount} suggestie${pendingCount !== 1 ? "s" : ""} klaar`
-              : "Geen openstaande suggesties"}
-          </span>
-          <div className="flex gap-2">
-            {pendingCount > 0 && (
-              <button
-                onClick={() => setShowFastConnect(true)}
-                className="text-xs px-2 py-1 bg-blue-700 hover:bg-blue-600 text-white rounded"
-              >
-                Bekijk ({pendingCount})
-              </button>
-            )}
-            <button
-              onClick={() => { onAnalyzeNow(); setShowFastConnect(true); }}
-              disabled={isAnalyzing}
-              className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-gray-200 rounded"
-            >
-              {isAnalyzing ? "Bezig..." : "Analyseer nu"}
-            </button>
-          </div>
-        </div>
       </Section>
 
       {showFastConnect && (
@@ -229,23 +259,13 @@ export function DashboardPanel({
   );
 }
 
-function StatCard({
-  label,
-  value,
-  color,
-  onClick,
-}: {
-  label: string;
-  value: number;
-  color: "blue" | "red" | "green";
-  onClick?: () => void;
+function StatCard({ label, value, color, onClick }: {
+  label: string; value: number; color: "blue" | "red" | "green"; onClick?: () => void;
 }) {
   const colors = { blue: "text-blue-400", red: "text-red-400", green: "text-green-400" };
   return (
-    <div
-      className={`bg-gray-800 rounded p-2 text-center ${onClick ? "cursor-pointer hover:bg-gray-700" : ""}`}
-      onClick={onClick}
-    >
+    <div className={`bg-gray-800 rounded p-2 text-center ${onClick ? "cursor-pointer hover:bg-gray-700" : ""}`}
+      onClick={onClick}>
       <div className={`text-xl font-bold ${colors[color]}`}>{value}</div>
       <div className="text-xs text-gray-400">{label}</div>
     </div>
@@ -263,10 +283,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function FileRow({ label, sub, onClick }: { label: string; sub?: string; onClick: () => void }) {
   return (
-    <div
-      className="px-3 py-2 border-b border-gray-700 last:border-0 cursor-pointer hover:bg-gray-700 flex justify-between items-center"
-      onClick={onClick}
-    >
+    <div className="px-3 py-2 border-b border-gray-700 last:border-0 cursor-pointer hover:bg-gray-700 flex justify-between items-center"
+      onClick={onClick}>
       <span className="truncate">{label}</span>
       {sub && <span className="text-xs text-gray-500 ml-2 shrink-0">{sub}</span>}
     </div>
