@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, VaultPilotSettings } from "./settings/settings";
 import { VaultPilotSettingsTab } from "./settings/SettingsTab";
 import { DashboardView, VIEW_TYPE_DASHBOARD } from "./views/DashboardView";
 import { CleanerView, VIEW_TYPE_CLEANER } from "./views/CleanerView";
+import { KanbanView, VIEW_TYPE_KANBAN } from "./views/KanbanView";
 import { CaptureModal } from "./views/CaptureModal";
 
 export default class VaultPilotPlugin extends Plugin {
@@ -18,6 +19,10 @@ export default class VaultPilotPlugin extends Plugin {
     this.registerView(
       VIEW_TYPE_CLEANER,
       (leaf) => new CleanerView(leaf, this)
+    );
+    this.registerView(
+      VIEW_TYPE_KANBAN,
+      (leaf) => new KanbanView(leaf, this)
     );
 
     this.addRibbonIcon("layout-dashboard", "VaultPilot Dashboard", () => {
@@ -37,6 +42,12 @@ export default class VaultPilotPlugin extends Plugin {
     });
 
     this.addCommand({
+      id: "open-kanban",
+      name: "Open Kanban Board",
+      callback: () => this.activateView(VIEW_TYPE_KANBAN),
+    });
+
+    this.addCommand({
       id: "quick-capture",
       name: "Quick Capture",
       hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "c" }],
@@ -53,6 +64,7 @@ export default class VaultPilotPlugin extends Plugin {
   onunload() {
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_DASHBOARD);
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_CLEANER);
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_KANBAN);
   }
 
   async loadSettings() {
