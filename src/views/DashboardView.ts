@@ -16,28 +16,34 @@ export class DashboardView extends ItemView {
     this.plugin = plugin;
   }
 
-  getViewType() {
-    return VIEW_TYPE_DASHBOARD;
-  }
-
-  getDisplayText() {
-    return "VaultPilot Dashboard";
-  }
-
-  getIcon() {
-    return "layout-dashboard";
-  }
+  getViewType() { return VIEW_TYPE_DASHBOARD; }
+  getDisplayText() { return "VaultPilot Dashboard"; }
+  getIcon() { return "layout-dashboard"; }
 
   async onOpen() {
+    this.mount();
+  }
+
+  rerender() {
+    this.mount();
+  }
+
+  private mount() {
     const container = this.contentEl;
     container.empty();
     container.id = "vaultpilot-root";
-    this.root = createRoot(container);
+    if (!this.root) this.root = createRoot(container);
     this.root.render(
       createElement(DashboardPanel, {
         app: this.app,
         settings: this.plugin.settings,
         onOpenCapture: () => new CaptureModal(this.app, this.plugin.settings).open(),
+        suggestions: this.plugin.suggestions,
+        isAnalyzing: this.plugin.isAnalyzing,
+        analyzeProgress: this.plugin.analyzeProgress,
+        onAnalyzeNow: () => this.plugin.analyzeNow(),
+        onApplySuggestions: (ids) => this.plugin.applySuggestions(ids),
+        onRejectAllSuggestions: () => this.plugin.rejectAllSuggestions(),
       })
     );
   }

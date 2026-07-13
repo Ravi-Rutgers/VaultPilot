@@ -6,12 +6,28 @@ import { CleanerView, VIEW_TYPE_CLEANER } from "./views/CleanerView";
 import { KanbanView, VIEW_TYPE_KANBAN } from "./views/KanbanView";
 import { SmartGraphView, VIEW_TYPE_GRAPH } from "./views/SmartGraphView";
 import { CaptureModal } from "./views/CaptureModal";
+import { BackgroundAnalyzer } from "./core/backgroundAnalyzer";
+import {
+  Suggestion,
+  fetchGroqSuggestions,
+  deduplicateSuggestions,
+  wikilinkLine,
+} from "./core/fastConnect";
 
 export default class VaultPilotPlugin extends Plugin {
   settings: VaultPilotSettings = DEFAULT_SETTINGS;
+  suggestions: Suggestion[] = [];
+  isAnalyzing = false;
+  analyzeProgress = 0;
+
+  private backgroundAnalyzer: BackgroundAnalyzer | null = null;
 
   async onload() {
     await this.loadSettings();
+
+    // Laad opgeslagen suggesties
+    const saved = await this.loadData();
+    this.suggestions = saved?.suggestions ?? [];
 
     this.registerView(
       VIEW_TYPE_DASHBOARD,
@@ -65,14 +81,33 @@ export default class VaultPilotPlugin extends Plugin {
       callback: () => new CaptureModal(this.app, this.settings).open(),
     });
 
+    this.addCommand({
+      id: "fast-connect-analyze",
+      name: "Fast Connect: Analyseer vault",
+      callback: () => this.analyzeNow(),
+    });
+
     this.addSettingTab(new VaultPilotSettingsTab(this.app, this));
+
+    this.backgroundAnalyzer = new BackgroundAnalyzer(
+      this.app,
+      this.settings,
+      () => this.suggestions,
+      (s) => {
+        this.suggestions = s;
+        this.saveData({ suggestions: s });
+        this.refreshDashboard();
+      }
+    );
 
     this.app.workspace.onLayoutReady(() => {
       this.activateView(VIEW_TYPE_DASHBOARD);
+      this.backgroundAnalyzer?.start();
     });
   }
 
   onunload() {
+    this.backgroundAnalyzer?.stop();
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_DASHBOARD);
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_CLEANER);
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_KANBAN);
@@ -85,6 +120,89 @@ export default class VaultPilotPlugin extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  refreshDashboard(): void {
+    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_DASHBOARD);
+    for (const leaf of leaves) {
+      (leaf.view as DashboardView).rerender();
+    }
+  }
+
+  async analyzeNow(): Promise<void> {
+    if (this.isAnalyzing) return;
+    this.isAnalyzing = true;
+    this.analyzeProgress = 0;
+    this.refreshDashboard();
+
+    // Stap 1: regel-gebaseerde analyse
+    await this.backgroundAnalyzer?.runOnce();
+    this.analyzeProgress = 30;
+    this.refreshDashboard();
+
+    // Stap 2: Groq AI (alleen als sleutel aanwezig)
+    if (this.settings.groqApiKey) {
+      const files = this.app.vault
+        .getMarkdownFiles()
+        .map((f) => ({ path: f.path, basename: f.basename }));
+
+      const fileContents: Record<string, string> = {};
+      await Promise.all(
+        files.map(async (f) => {
+          try {
+            const tf = this.app.vault.getFileByPath(f.path);
+            if (tf) fileContents[f.path] = await this.app.vault.read(tf);
+          } catch { /* overslaan */ }
+        })
+      );
+
+      const aiSuggestions = await fetchGroqSuggestions(
+        files,
+        fileContents,
+        this.app.metadataCache.resolvedLinks,
+        this.settings.groqApiKey,
+        (done, total) => {
+          this.analyzeProgress = 30 + Math.round((done / total) * 70);
+          this.refreshDashboard();
+        }
+      );
+
+      this.suggestions = deduplicateSuggestions(this.suggestions, aiSuggestions);
+      await this.saveData({ suggestions: this.suggestions });
+    }
+
+    this.analyzeProgress = 100;
+    this.isAnalyzing = false;
+    this.refreshDashboard();
+  }
+
+  async applySuggestions(ids: string[]): Promise<void> {
+    const toApply = this.suggestions.filter((s) => ids.includes(s.id));
+
+    for (const suggestion of toApply) {
+      try {
+        const file = this.app.vault.getFileByPath(suggestion.source);
+        if (!file) continue;
+        const content = await this.app.vault.read(file);
+        if (content.includes(`[[${suggestion.targetBasename}]]`)) {
+          suggestion.status = "accepted";
+          continue;
+        }
+        await this.app.vault.modify(file, content + wikilinkLine(suggestion.targetBasename));
+        suggestion.status = "accepted";
+      } catch { /* bestand verwijderd, overslaan */ }
+    }
+
+    await this.saveData({ suggestions: this.suggestions });
+    this.refreshDashboard();
+  }
+
+  rejectAllSuggestions(): void {
+    for (const s of this.suggestions) {
+      if (s.status === "pending") s.status = "rejected";
+    }
+    this.saveData({ suggestions: this.suggestions });
+    this.refreshDashboard();
   }
 
   private async activateView(viewType: string) {
