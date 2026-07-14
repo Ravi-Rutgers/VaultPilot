@@ -53,8 +53,18 @@ export function FastConnectPanel({
   const toggle = (id: string) => {
     setChecked((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    const allIds = visible.map((s) => s.id);
+    const allChecked = allIds.every((id) => checked.has(id));
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (allChecked) allIds.forEach((id) => next.delete(id));
+      else allIds.forEach((id) => next.add(id));
       return next;
     });
   };
@@ -67,129 +77,149 @@ export function FastConnectPanel({
 
   const autoItems = visible.filter((s) => s.method === "rule");
   const aiItems = visible.filter((s) => s.method === "ai");
+  const allChecked = visible.length > 0 && visible.every((s) => checked.has(s.id));
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.6)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="bg-gray-900 rounded-lg shadow-2xl flex flex-col"
-        style={{ width: 480, maxHeight: "80vh" }}
+        className="bg-gray-950 ring-1 ring-white/10 rounded-2xl shadow-2xl flex flex-col w-full max-w-md"
+        style={{ maxHeight: "80vh" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 shrink-0">
-          <span className="font-semibold text-white text-sm">⚡ Fast Connect</span>
+        <div className="flex items-center justify-between px-4 py-3.5 border-b border-gray-800">
           <div className="flex items-center gap-2">
-            <select
-              className="text-xs bg-gray-800 text-gray-300 border border-gray-600 rounded px-2 py-1"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              {folders.map((f) => (
-                <option key={f} value={f}>{f === "alles" ? "Alle mappen" : f}</option>
-              ))}
-            </select>
+            <div className="w-5 h-5 rounded-md bg-amber-500/20 flex items-center justify-center text-amber-400 text-xs">⚡</div>
+            <span className="font-semibold text-gray-100 text-sm">Fast Connect</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {folders.length > 2 && (
+              <select
+                className="text-xs bg-gray-900 text-gray-400 ring-1 ring-white/8 rounded-lg px-2 py-1 outline-none"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              >
+                {folders.map((f) => (
+                  <option key={f} value={f}>{f === "alles" ? "Alle mappen" : f}</option>
+                ))}
+              </select>
+            )}
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-white text-lg leading-none px-1"
+              className="w-6 h-6 flex items-center justify-center rounded-md text-gray-600 hover:text-gray-300 hover:bg-gray-800 transition-colors text-base leading-none"
             >
               ×
             </button>
           </div>
         </div>
 
-        {/* Analyse-knop + voortgang */}
-        <div className="px-4 py-2 border-b border-gray-800 shrink-0">
+        {/* Analyse balk */}
+        <div className="px-4 py-3 border-b border-gray-800/60">
           {isAnalyzing ? (
-            <div>
-              <div className="text-xs text-gray-400 mb-1">
-                Analyseren... {analyzeProgress}%
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Analyseren…</span>
+                <span className="font-mono">{analyzeProgress}%</span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-1">
+              <div className="w-full bg-gray-800 rounded-full h-1">
                 <div
-                  className="bg-blue-500 h-1 rounded-full transition-all"
+                  className="bg-indigo-500 h-1 rounded-full transition-all duration-300"
                   style={{ width: `${analyzeProgress}%` }}
                 />
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-3">
               <button
                 onClick={onAnalyzeNow}
-                disabled={isAnalyzing}
-                className="text-xs px-3 py-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded transition-colors"
-                title={!hasGroqKey ? "Geen Groq API-sleutel — alleen regel-gebaseerd" : ""}
+                className="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors font-medium"
               >
                 Analyseer nu {hasGroqKey ? "(regel + AI)" : "(regel)"}
               </button>
               {!hasGroqKey && (
-                <span className="text-xs text-yellow-500">
-                  Stel een Groq-sleutel in voor AI-analyse
-                </span>
+                <span className="text-[10px] text-amber-600">Stel een Groq-sleutel in voor AI</span>
               )}
             </div>
           )}
         </div>
 
         {/* Suggestielijst */}
-        <div className="flex-1 overflow-auto px-2 py-2 space-y-1">
-          {visible.length === 0 && (
-            <p className="text-xs text-gray-500 text-center py-6">
-              Geen suggesties gevonden. Klik "Analyseer nu" om te starten.
-            </p>
-          )}
-
-          {autoItems.length > 0 && (
+        <div className="flex-1 overflow-auto px-3 py-2 space-y-0.5">
+          {visible.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-2">
+              <div className="text-2xl">🔗</div>
+              <p className="text-xs text-gray-600 text-center">
+                Geen suggesties gevonden.<br />Klik "Analyseer nu" om te starten.
+              </p>
+            </div>
+          ) : (
             <>
-              <div className="text-xs text-gray-500 uppercase tracking-wider px-2 pt-1 pb-1">
-                Regel-gebaseerd (hoge zekerheid)
-              </div>
-              {autoItems.map((s) => (
-                <SuggestionRow
-                  key={s.id}
-                  suggestion={s}
-                  checked={checked.has(s.id)}
-                  onToggle={() => toggle(s.id)}
+              {/* Selecteer alles */}
+              <div
+                className="flex items-center gap-2 px-2 py-1.5 cursor-pointer"
+                onClick={toggleAll}
+              >
+                <input
+                  type="checkbox"
+                  checked={allChecked}
+                  onChange={toggleAll}
+                  onClick={(e) => e.stopPropagation()}
+                  className="accent-indigo-500"
                 />
-              ))}
-            </>
-          )}
+                <span className="text-[10px] text-gray-600 uppercase tracking-wider">
+                  {allChecked ? "Alles deselecteren" : "Alles selecteren"}
+                </span>
+              </div>
 
-          {aiItems.length > 0 && (
-            <>
-              <div className="text-xs text-gray-500 uppercase tracking-wider px-2 pt-2 pb-1">
-                AI-suggesties
-              </div>
-              {aiItems.map((s) => (
-                <SuggestionRow
-                  key={s.id}
-                  suggestion={s}
-                  checked={checked.has(s.id)}
-                  onToggle={() => toggle(s.id)}
-                />
-              ))}
+              {autoItems.length > 0 && (
+                <>
+                  <GroupHeader>Hoge zekerheid (regel)</GroupHeader>
+                  {autoItems.map((s) => (
+                    <SuggestionRow key={s.id} suggestion={s} checked={checked.has(s.id)} onToggle={() => toggle(s.id)} />
+                  ))}
+                </>
+              )}
+
+              {aiItems.length > 0 && (
+                <>
+                  <GroupHeader>AI-suggesties</GroupHeader>
+                  {aiItems.map((s) => (
+                    <SuggestionRow key={s.id} suggestion={s} checked={checked.has(s.id)} onToggle={() => toggle(s.id)} />
+                  ))}
+                </>
+              )}
             </>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-700 shrink-0">
+        <div className="flex items-center justify-between px-4 py-3.5 border-t border-gray-800">
           <button
             onClick={onRejectAll}
-            className="text-xs text-gray-500 hover:text-red-400 transition-colors"
+            className="text-xs text-gray-600 hover:text-rose-400 transition-colors"
           >
             Alles afwijzen
           </button>
           <button
             onClick={handleApply}
             disabled={checked.size === 0 || applying}
-            className="text-xs px-4 py-2 bg-green-600 hover:bg-green-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded transition-colors"
+            className="text-xs px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg transition-colors font-medium"
           >
-            {applying ? "Bezig..." : `Pas ${checked.size} toe`}
+            {applying ? "Bezig…" : `${checked.size} toepassen`}
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function GroupHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[10px] uppercase tracking-widest text-gray-600 px-2 pt-3 pb-1 font-medium">
+      {children}
     </div>
   );
 }
@@ -205,10 +235,12 @@ function SuggestionRow({
 }) {
   const pct = Math.round(suggestion.confidence * 100);
   const sourceLabel = suggestion.source.split("/").pop()?.replace(".md", "") ?? suggestion.source;
+  const confidence =
+    pct >= 85 ? "text-emerald-400" : pct >= 70 ? "text-amber-400" : "text-gray-600";
 
   return (
     <div
-      className="flex items-start gap-2 px-2 py-2 rounded hover:bg-gray-800 cursor-pointer"
+      className={`flex items-start gap-2.5 px-2 py-2.5 rounded-lg cursor-pointer transition-colors ${checked ? "bg-indigo-950/40" : "hover:bg-gray-800/60"}`}
       onClick={onToggle}
     >
       <input
@@ -216,21 +248,17 @@ function SuggestionRow({
         checked={checked}
         onChange={onToggle}
         onClick={(e) => e.stopPropagation()}
-        className="mt-0.5 shrink-0 accent-blue-500"
+        className="mt-0.5 shrink-0 accent-indigo-500"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-xs text-gray-200 truncate">
-          <span className="text-gray-400">{sourceLabel}</span>
-          <span className="text-gray-600 mx-1">→</span>
-          <span className="text-blue-400">{suggestion.targetBasename}</span>
+        <div className="text-xs flex items-center gap-1 truncate">
+          <span className="text-gray-400 truncate">{sourceLabel}</span>
+          <span className="text-gray-700 shrink-0">→</span>
+          <span className="text-indigo-400 font-medium shrink-0">{suggestion.targetBasename}</span>
         </div>
-        <div className="text-xs text-gray-600 truncate mt-0.5">{suggestion.reason}</div>
+        <div className="text-[10px] text-gray-600 truncate mt-0.5">{suggestion.reason}</div>
       </div>
-      <span
-        className={`text-xs shrink-0 font-mono ${
-          pct >= 85 ? "text-green-400" : pct >= 70 ? "text-yellow-400" : "text-gray-500"
-        }`}
-      >
+      <span className={`text-xs shrink-0 font-mono font-semibold ${confidence}`}>
         {pct}%
       </span>
     </div>

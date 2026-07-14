@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+#vaultpilot-root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: dark;
+}
+
+#vaultpilot-root * {
+  box-sizing: border-box;
+}
+
+#vaultpilot-root select option {
+  background-color: #111118;
+}
