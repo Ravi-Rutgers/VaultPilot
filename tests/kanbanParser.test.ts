@@ -64,3 +64,33 @@ describe("nextStatus", () => {
   it("doing → done", () => expect(nextStatus("doing")).toBe("done"));
   it("done → todo", () => expect(nextStatus("done")).toBe("todo"));
 });
+
+import { extractLabel } from "../src/core/kanbanParser";
+
+describe("extractLabel", () => {
+  it("geeft null terug als er geen label is", () => {
+    expect(extractLabel("Gewone taak")).toEqual({ label: null, cleanText: "Gewone taak" });
+  });
+
+  it("herkent #hoog", () => {
+    expect(extractLabel("Fix bug #hoog")).toEqual({ label: "hoog", cleanText: "Fix bug" });
+  });
+
+  it("herkent #midden", () => {
+    expect(extractLabel("Schrijf docs #midden")).toEqual({ label: "midden", cleanText: "Schrijf docs" });
+  });
+
+  it("herkent #laag", () => {
+    expect(extractLabel("Refactor later #laag")).toEqual({ label: "laag", cleanText: "Refactor later" });
+  });
+
+  it("label midden in de tekst", () => {
+    const result = extractLabel("Fix #hoog dit probleem");
+    expect(result.label).toBe("hoog");
+    expect(result.cleanText).toBe("Fix dit probleem");
+  });
+
+  it("negeert onbekende hashtags", () => {
+    expect(extractLabel("Fix #typo bug")).toEqual({ label: null, cleanText: "Fix #typo bug" });
+  });
+});

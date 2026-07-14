@@ -44,3 +44,16 @@ export function nextStatus(current: KanbanStatus): KanbanStatus {
   if (current === "doing") return "done";
   return "todo";
 }
+
+export interface LabelResult {
+  label: "hoog" | "midden" | "laag" | null;
+  cleanText: string;
+}
+
+export function extractLabel(text: string): LabelResult {
+  const match = text.match(/#(hoog|midden|laag)\b/i);
+  if (!match) return { label: null, cleanText: text };
+  const label = match[1].toLowerCase() as "hoog" | "midden" | "laag";
+  const cleanText = text.replace(match[0], "").replace(/\s{2,}/g, " ").trim();
+  return { label, cleanText };
+}
