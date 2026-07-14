@@ -1,4 +1,4 @@
-import { TFile } from "obsidian";
+import { App, TFile } from "obsidian";
 
 export type KanbanStatus = "todo" | "doing" | "done";
 
@@ -63,4 +63,19 @@ export function appendTaskToContent(content: string, text: string, status: Kanba
   const line = `${marker} ${text}`;
   if (!content) return line;
   return content.endsWith("\n") ? `${content}${line}` : `${content}\n${line}`;
+}
+
+export async function loadTasksFromFolder(app: App, folderPath: string): Promise<KanbanTask[]> {
+  const allFiles = app.vault.getMarkdownFiles();
+  const inFolder = allFiles.filter((f) => f.path.startsWith(folderPath));
+  const results: KanbanTask[] = [];
+  for (const file of inFolder) {
+    try {
+      const content = await app.vault.read(file);
+      results.push(...parseKanbanTasks(content, file));
+    } catch {
+      // bestand niet leesbaar — overslaan
+    }
+  }
+  return results;
 }

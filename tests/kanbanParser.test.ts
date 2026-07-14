@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TFile } from "obsidian";
-import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel, appendTaskToContent } from "../src/core/kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel, appendTaskToContent, loadTasksFromFolder } from "../src/core/kanbanParser";
 
 const mockFile = { path: "projects/Test/Test.md", basename: "Test" } as TFile;
 
@@ -128,5 +128,47 @@ describe("appendTaskToContent", () => {
   it("bestand eindigt al op newline", () => {
     const result = appendTaskToContent("inhoud\n", "Taak", "todo");
     expect(result).toBe("inhoud\n- [ ] Taak");
+  });
+});
+
+describe("loadTasksFromFolder", () => {
+  it("laadt taken uit meerdere bestanden", async () => {
+    const file1 = { path: "projects/P/P.md", basename: "P" } as TFile;
+    const file2 = { path: "projects/P/sub/dag.md", basename: "dag" } as TFile;
+    const mockApp = {
+      vault: {
+        getMarkdownFiles: () => [file1, file2],
+        read: async (f: TFile) =>
+          f.path === file1.path ? "- [ ] Taak A" : "- [x] Taak B",
+      },
+    } as any;
+    const tasks = await loadTasksFromFolder(mockApp, "projects/P/");
+    expect(tasks).toHaveLength(2);
+    expect(tasks.map((t) => t.text)).toContain("Taak A");
+    expect(tasks.map((t) => t.text)).toContain("Taak B");
+  });
+
+  it("slaat bestanden buiten de map over", async () => {
+    const file = { path: "inbox/note.md", basename: "note" } as TFile;
+    const mockApp = {
+      vault: {
+        getMarkdownFiles: () => [file],
+        read: async () => "- [ ] Taak",
+      },
+    } as any;
+    const tasks = await loadTasksFromFolder(mockApp, "projects/P/");
+    expect(tasks).toHaveLength(0);
+  });
+
+  it("geeft lege array bij map zonder taken", async () => {
+    const file = { path: "projects/P/leeg.md", basename: "leeg" } as TFile;
+    const mockApp = {
+      vault: {
+        getMarkdownFiles: () => [file],
+        read: async () => "# Geen taken hier",
+      },
+    } as any;
+    const tasks = await loadTasksFromFolder(mockApp, "projects/P/");
+    expect(tasks).toHaveLength(0);
   });
 });
