@@ -1,6 +1,7 @@
-import { Plugin, WorkspaceLeaf } from "obsidian";
+import { Plugin, TFile, WorkspaceLeaf } from "obsidian";
 import { DEFAULT_SETTINGS, VaultPilotSettings } from "./settings/settings";
 import { getSupabase, signOut } from "./core/supabaseClient";
+import { trackEvent } from "./core/analyticsService";
 import { LoginModal } from "./views/LoginModal";
 import { Session } from "@supabase/supabase-js";
 import { VaultPilotSettingsTab } from "./settings/SettingsTab";
@@ -24,6 +25,7 @@ export default class VaultPilotPlugin extends Plugin {
   analyzeProgress = 0;
 
   private backgroundAnalyzer: BackgroundAnalyzer | null = null;
+  private modifyDebounce = new Map<string, ReturnType<typeof setTimeout>>();
 
   async onload() {
     await this.loadSettings();
@@ -123,6 +125,13 @@ export default class VaultPilotPlugin extends Plugin {
         });
       }
 
+      if (this.isLoggedIn) {
+        trackEvent(this.settings.vaultId, "vault_opened", {
+          vault: this.app.vault.getName(),
+        });
+      }
+
+      this.registerVaultModifyTracking();
       this.activateView(VIEW_TYPE_DASHBOARD);
       this.backgroundAnalyzer?.start();
     });
@@ -164,6 +173,7 @@ export default class VaultPilotPlugin extends Plugin {
     this.isAnalyzing = true;
     this.analyzeProgress = 0;
     this.refreshDashboard();
+    if (this.isLoggedIn) trackEvent(this.settings.vaultId, "fast_connect_used");
 
     // Stap 1: regel-gebaseerde analyse
     await this.backgroundAnalyzer?.runOnce();
@@ -224,6 +234,9 @@ export default class VaultPilotPlugin extends Plugin {
     }
 
     await this.saveSuggestions(this.suggestions);
+    if (this.isLoggedIn) {
+      trackEvent(this.settings.vaultId, "fast_connect_applied", { count: ids.length });
+    }
     this.refreshDashboard();
   }
 
@@ -233,6 +246,27 @@ export default class VaultPilotPlugin extends Plugin {
     }
     this.saveSuggestions(this.suggestions);
     this.refreshDashboard();
+  }
+
+  private registerVaultModifyTracking() {
+    this.registerEvent(
+      this.app.vault.on("modify", (file: TFile) => {
+        if (!this.isLoggedIn) return;
+        const existing = this.modifyDebounce.get(file.path);
+        if (existing) clearTimeout(existing);
+        const timer = setTimeout(() => {
+          this.modifyDebounce.delete(file.path);
+          const folder = file.path.includes("/")
+            ? file.path.slice(0, file.path.lastIndexOf("/") + 1)
+            : "";
+          trackEvent(this.settings.vaultId, "note_modified", {
+            path: file.path,
+            folder,
+          });
+        }, 30_000);
+        this.modifyDebounce.set(file.path, timer);
+      })
+    );
   }
 
   get isLoggedIn(): boolean {

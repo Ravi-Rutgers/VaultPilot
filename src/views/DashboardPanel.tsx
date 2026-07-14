@@ -10,6 +10,7 @@ import {
 import { parseOpenTasks } from "../core/taskParser";
 import { Suggestion } from "../core/fastConnect";
 import { FastConnectPanel } from "./FastConnectPanel";
+import { fetchAnalyticsStats, AnalyticsStats } from "../core/analyticsService";
 
 interface Props {
   app: App;
@@ -18,6 +19,7 @@ interface Props {
   onOpenView: (viewId: string) => void;
   isLoggedIn: boolean;
   userEmail: string;
+  vaultId: string;
   onLogin: () => void;
   onLogout: () => void;
   suggestions: Suggestion[];
@@ -55,6 +57,7 @@ export function DashboardPanel({
   onOpenView,
   isLoggedIn,
   userEmail,
+  vaultId,
   onLogin,
   onLogout,
   suggestions,
@@ -220,6 +223,11 @@ export function DashboardPanel({
         </button>
       )}
 
+      {/* Vault Analytics — alleen zichtbaar wanneer ingelogd */}
+      {isLoggedIn && vaultId && (
+        <AnalyticsBlock vaultId={vaultId} />
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         <StatCard label="Projecten" value={data.activeProjects.length} color="blue"
@@ -281,6 +289,63 @@ export function DashboardPanel({
           onClose={() => setShowFastConnect(false)}
         />
       )}
+    </div>
+  );
+}
+
+function AnalyticsBlock({ vaultId }: { vaultId: string }) {
+  const [stats, setStats] = useState<AnalyticsStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      const s = await fetchAnalyticsStats(vaultId);
+      if (!cancelled) {
+        setStats(s);
+        setLoading(false);
+      }
+    };
+
+    load();
+    // Refresh elke 5 minuten
+    const interval = setInterval(load, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [vaultId]);
+
+  if (loading) {
+    return (
+      <div className="mb-3 px-3 py-2 bg-gray-800 rounded text-xs text-gray-500">
+        Analytics laden…
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  const folderLabel = stats.mostActiveFolder
+    ? stats.mostActiveFolder.replace(/\/$/, "").split("/").pop() ?? stats.mostActiveFolder
+    : null;
+
+  return (
+    <div className="mb-3">
+      <div className="text-xs uppercase tracking-wider text-gray-500 mb-1">Vault Analytics — 7 dagen</div>
+      <div className="bg-gray-800 rounded p-2 grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div className="text-lg font-bold text-purple-400">{stats.notesModifiedThisWeek}</div>
+          <div className="text-[10px] text-gray-400 leading-tight">notities gewijzigd</div>
+        </div>
+        <div>
+          <div className="text-lg font-bold text-cyan-400">{stats.activeDaysThisWeek}</div>
+          <div className="text-[10px] text-gray-400 leading-tight">actieve dagen</div>
+        </div>
+        <div>
+          <div className="text-lg font-bold text-orange-400 truncate">{folderLabel ?? "—"}</div>
+          <div className="text-[10px] text-gray-400 leading-tight">meest actief</div>
+        </div>
+      </div>
     </div>
   );
 }

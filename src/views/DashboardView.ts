@@ -37,6 +37,7 @@ export class DashboardView extends ItemView {
         onOpenView: (viewId: string) => this.plugin.openView(viewId),
         isLoggedIn: this.plugin.isLoggedIn,
         userEmail: this.plugin.settings.userEmail,
+        vaultId: this.plugin.settings.vaultId,
         onLogin: () => this.plugin.openLoginModal(),
         onLogout: () => this.plugin.logout(),
         suggestions: this.plugin.suggestions,
