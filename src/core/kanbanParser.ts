@@ -57,3 +57,10 @@ export function extractLabel(text: string): LabelResult {
   const cleanText = text.replace(match[0], "").replace(/\s{2,}/g, " ").trim();
   return { label, cleanText };
 }
+
+export function appendTaskToContent(content: string, text: string, status: KanbanStatus): string {
+  const marker = MARKERS[status];
+  const line = `${marker} ${text}`;
+  if (!content) return line;
+  return content.endsWith("\n") ? `${content}${line}` : `${content}\n${line}`;
+}

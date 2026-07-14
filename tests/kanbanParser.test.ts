@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TFile } from "obsidian";
-import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel } from "../src/core/kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel, appendTaskToContent } from "../src/core/kanbanParser";
 
 const mockFile = { path: "projects/Test/Test.md", basename: "Test" } as TFile;
 
@@ -106,5 +106,27 @@ describe("extractLabel", () => {
     const result = extractLabel("Fix #hoog dit #midden probleem");
     expect(result.label).toBe("hoog");
     expect(result.cleanText).toBe("Fix dit #midden probleem");
+  });
+});
+
+describe("appendTaskToContent", () => {
+  it("voegt todo taak toe aan einde van bestand", () => {
+    const result = appendTaskToContent("# Project\n\nBestaande inhoud", "Nieuwe taak", "todo");
+    expect(result).toBe("# Project\n\nBestaande inhoud\n- [ ] Nieuwe taak");
+  });
+
+  it("voegt doing taak toe", () => {
+    const result = appendTaskToContent("", "Bezig", "doing");
+    expect(result).toBe("- [/] Bezig");
+  });
+
+  it("voegt done taak toe", () => {
+    const result = appendTaskToContent("bestaand", "Klaar", "done");
+    expect(result).toBe("bestaand\n- [x] Klaar");
+  });
+
+  it("bestand eindigt al op newline", () => {
+    const result = appendTaskToContent("inhoud\n", "Taak", "todo");
+    expect(result).toBe("inhoud\n- [ ] Taak");
   });
 });
