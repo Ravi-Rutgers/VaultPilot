@@ -8,6 +8,7 @@ interface Props {
   isAnalyzing: boolean;
   analyzeProgress: number;
   hasGroqKey: boolean;
+  minConfidence: number;
   onAnalyzeNow: () => void;
   onApply: (ids: string[]) => Promise<void>;
   onRejectAll: () => void;
@@ -20,6 +21,7 @@ export function FastConnectPanel({
   isAnalyzing,
   analyzeProgress,
   hasGroqKey,
+  minConfidence,
   onAnalyzeNow,
   onApply,
   onRejectAll,
@@ -45,10 +47,12 @@ export function FastConnectPanel({
   }, [suggestions]);
 
   const visible = useMemo(() => {
-    const pending = suggestions.filter((s) => s.status === "pending");
+    const pending = suggestions.filter(
+      (s) => s.status === "pending" && s.confidence >= minConfidence
+    );
     if (filter === "alles") return pending;
     return pending.filter((s) => s.source.startsWith(filter + "/"));
-  }, [suggestions, filter]);
+  }, [suggestions, filter, minConfidence]);
 
   const toggle = (id: string) => {
     setChecked((prev) => {

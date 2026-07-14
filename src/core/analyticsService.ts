@@ -22,6 +22,42 @@ export interface AnalyticsStats {
   activeDaysThisWeek: number;
 }
 
+export interface DayActivity {
+  date: string;    // "ma", "di", etc.
+  count: number;
+}
+
+export async function fetchWeeklyActivity(vaultId: string): Promise<DayActivity[]> {
+  if (!vaultId) return [];
+  try {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await getSupabase()
+      .from("analytics_events")
+      .select("created_at")
+      .eq("vault_id", vaultId)
+      .gte("created_at", weekAgo);
+
+    if (!data) return [];
+
+    const countsByDate: Record<string, number> = {};
+    for (const e of data) {
+      const d = (e.created_at as string).slice(0, 10);
+      countsByDate[d] = (countsByDate[d] ?? 0) + 1;
+    }
+
+    const days: DayActivity[] = [];
+    const dayNames = ["zo", "ma", "di", "wo", "do", "vr", "za"];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const key = d.toISOString().slice(0, 10);
+      days.push({ date: dayNames[d.getDay()], count: countsByDate[key] ?? 0 });
+    }
+    return days;
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchAnalyticsStats(vaultId: string): Promise<AnalyticsStats | null> {
   if (!vaultId) return null;
   try {

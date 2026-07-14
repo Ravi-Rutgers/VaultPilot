@@ -65,6 +65,20 @@ export class VaultPilotSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Fast Connect — minimale betrouwbaarheid")
+      .setDesc("Suggesties met een lagere score worden verborgen (0.5 = alles zien, 0.9 = alleen hoge zekerheid)")
+      .addSlider((slider) =>
+        slider
+          .setLimits(0.5, 0.95, 0.05)
+          .setValue(this.plugin.settings.fastConnectMinConfidence)
+          .setDynamicTooltip()
+          .onChange(async (value) => {
+            this.plugin.settings.fastConnectMinConfidence = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
       .setName("Groq API-sleutel")
       .setDesc("Vereist voor AI-analyse in Fast Connect. Gratis te verkrijgen op console.groq.com")
       .addText((text) => {

@@ -10,7 +10,7 @@ import {
 import { parseOpenTasks } from "../core/taskParser";
 import { Suggestion } from "../core/fastConnect";
 import { FastConnectPanel } from "./FastConnectPanel";
-import { fetchAnalyticsStats, AnalyticsStats } from "../core/analyticsService";
+import { fetchAnalyticsStats, fetchWeeklyActivity, AnalyticsStats, DayActivity } from "../core/analyticsService";
 
 interface Props {
   app: App;
@@ -71,7 +71,10 @@ export function DashboardPanel({
   const [showFastConnect, setShowFastConnect] = useState(false);
   const [query, setQuery] = useState("");
 
-  const pendingCount = suggestions.filter((s) => s.status === "pending").length;
+  const minConf = settings.fastConnectMinConfidence ?? 0.6;
+  const pendingCount = suggestions.filter(
+    (s) => s.status === "pending" && s.confidence >= minConf
+  ).length;
 
   useEffect(() => {
     let cancelled = false;
@@ -301,9 +304,10 @@ export function DashboardPanel({
           analyzeProgress={analyzeProgress}
           hasGroqKey={!!settings.groqApiKey}
           onAnalyzeNow={onAnalyzeNow}
+          minConfidence={minConf}
           onApply={async (ids) => {
             await onApplySuggestions(ids);
-            if (suggestions.filter((s) => s.status === "pending").length === 0) {
+            if (suggestions.filter((s) => s.status === "pending" && s.confidence >= minConf).length === 0) {
               setShowFastConnect(false);
             }
           }}
@@ -317,14 +321,18 @@ export function DashboardPanel({
 
 function AnalyticsBlock({ vaultId }: { vaultId: string }) {
   const [stats, setStats] = useState<AnalyticsStats | null>(null);
+  const [activity, setActivity] = useState<DayActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       setLoading(true);
-      const s = await fetchAnalyticsStats(vaultId);
-      if (!cancelled) { setStats(s); setLoading(false); }
+      const [s, a] = await Promise.all([
+        fetchAnalyticsStats(vaultId),
+        fetchWeeklyActivity(vaultId),
+      ]);
+      if (!cancelled) { setStats(s); setActivity(a); setLoading(false); }
     };
     load();
     const interval = setInterval(load, 5 * 60 * 1000);
@@ -337,10 +345,12 @@ function AnalyticsBlock({ vaultId }: { vaultId: string }) {
     ? stats.mostActiveFolder.replace(/\/$/, "").split("/").pop() ?? stats.mostActiveFolder
     : "—";
 
+  const maxCount = Math.max(...activity.map((d) => d.count), 1);
+
   return (
     <div className="bg-gray-900 ring-1 ring-white/8 rounded-lg p-3">
       <div className="text-[10px] uppercase tracking-widest text-gray-600 mb-2 font-medium">Analytics — 7 dagen</div>
-      <div className="grid grid-cols-3 gap-2 text-center">
+      <div className="grid grid-cols-3 gap-2 text-center mb-3">
         <AnalyticsStat value={stats.notesModifiedThisWeek} label="gewijzigd" color="text-violet-400" />
         <AnalyticsStat value={stats.activeDaysThisWeek} label="actieve dagen" color="text-cyan-400" />
         <div>
@@ -348,6 +358,24 @@ function AnalyticsBlock({ vaultId }: { vaultId: string }) {
           <div className="text-[10px] text-gray-600 mt-0.5">meest actief</div>
         </div>
       </div>
+      {activity.length > 0 && (
+        <div className="flex items-end gap-1 h-12">
+          {activity.map((d, i) => {
+            const h = maxCount > 0 ? Math.max(Math.round((d.count / maxCount) * 40), d.count > 0 ? 3 : 0) : 0;
+            const isToday = i === activity.length - 1;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center justify-end gap-0.5">
+                <div
+                  className={`w-full rounded-sm transition-all ${isToday ? "bg-indigo-500" : "bg-gray-700"}`}
+                  style={{ height: `${h}px` }}
+                  title={`${d.date}: ${d.count} events`}
+                />
+                <span className={`text-[9px] ${isToday ? "text-indigo-400" : "text-gray-600"}`}>{d.date}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
