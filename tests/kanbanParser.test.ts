@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TFile } from "obsidian";
-import { parseKanbanTasks, updateTaskStatus, nextStatus } from "../src/core/kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel } from "../src/core/kanbanParser";
 
 const mockFile = { path: "projects/Test/Test.md", basename: "Test" } as TFile;
 
@@ -65,8 +65,6 @@ describe("nextStatus", () => {
   it("done → todo", () => expect(nextStatus("done")).toBe("todo"));
 });
 
-import { extractLabel } from "../src/core/kanbanParser";
-
 describe("extractLabel", () => {
   it("geeft null terug als er geen label is", () => {
     expect(extractLabel("Gewone taak")).toEqual({ label: null, cleanText: "Gewone taak" });
@@ -92,5 +90,21 @@ describe("extractLabel", () => {
 
   it("negeert onbekende hashtags", () => {
     expect(extractLabel("Fix #typo bug")).toEqual({ label: null, cleanText: "Fix #typo bug" });
+  });
+
+  it("label aan het begin van de tekst", () => {
+    const result = extractLabel("#hoog Fix dit probleem");
+    expect(result.label).toBe("hoog");
+    expect(result.cleanText).toBe("Fix dit probleem");
+  });
+
+  it("lege string geeft null terug", () => {
+    expect(extractLabel("")).toEqual({ label: null, cleanText: "" });
+  });
+
+  it("eerste label wint bij meerdere labels", () => {
+    const result = extractLabel("Fix #hoog dit #midden probleem");
+    expect(result.label).toBe("hoog");
+    expect(result.cleanText).toBe("Fix dit #midden probleem");
   });
 });
