@@ -58,6 +58,15 @@ export function extractLabel(text: string): LabelResult {
   return { label, cleanText };
 }
 
+export function updateTaskText(content: string, lineNumber: number, newText: string): string {
+  const lines = content.split("\n");
+  const line = lines[lineNumber];
+  const markerMatch = line.match(/^- \[.?\] /);
+  if (!markerMatch) return content;
+  lines[lineNumber] = `${markerMatch[0]}${newText}`;
+  return lines.join("\n");
+}
+
 export function appendTaskToContent(content: string, text: string, status: KanbanStatus): string {
   const marker = MARKERS[status];
   const line = `${marker} ${text}`;

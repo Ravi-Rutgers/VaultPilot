@@ -15,6 +15,7 @@ interface Props {
   onDragStart: (task: KanbanTask) => void;
   onDrop: (status: KanbanStatus) => void;
   onAddTask: (text: string, status: KanbanStatus) => Promise<void>;
+  onEdit: (task: KanbanTask, newText: string) => Promise<void>;
 }
 
 export function KanbanColumn({
@@ -30,6 +31,7 @@ export function KanbanColumn({
   onDragStart,
   onDrop,
   onAddTask,
+  onEdit,
 }: Props) {
   const [isOver, setIsOver] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -95,6 +97,7 @@ export function KanbanColumn({
                 e.dataTransfer.effectAllowed = "move";
                 onDragStart(task);
               }}
+              onEdit={(newText) => onEdit(task, newText)}
             />
           );
         })}

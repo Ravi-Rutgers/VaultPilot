@@ -53,6 +53,10 @@ export default class VaultPilotPlugin extends Plugin {
       this.activateView(VIEW_TYPE_DASHBOARD);
     });
 
+    this.addRibbonIcon("layout-kanban", "VaultPilot Kanban", () => {
+      this.activateView(VIEW_TYPE_KANBAN);
+    });
+
     this.addCommand({
       id: "open-dashboard",
       name: "Open Dashboard",

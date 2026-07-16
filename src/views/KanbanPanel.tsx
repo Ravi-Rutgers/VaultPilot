@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { App, Notice } from "obsidian";
 import { VaultPilotSettings } from "../settings/settings";
 import { ProjectInfo } from "../types";
@@ -8,6 +8,7 @@ import {
   KanbanStatus,
   loadTasksFromFolder,
   updateTaskStatus,
+  updateTaskText,
   appendTaskToContent,
 } from "../core/kanbanParser";
 import { KanbanColumn } from "./KanbanColumn";
@@ -36,7 +37,6 @@ export function KanbanPanel({ app, settings }: Props) {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [draggedTask, setDraggedTask] = useState<KanbanTask | null>(null);
-  const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const allFiles = app.vault.getMarkdownFiles();
@@ -88,6 +88,17 @@ export function KanbanPanel({ app, settings }: Props) {
     setDraggedTask(null);
   };
 
+  const handleEditTask = async (task: KanbanTask, newText: string) => {
+    try {
+      const content = await app.vault.read(task.file);
+      const updated = updateTaskText(content, task.lineNumber, newText);
+      await app.vault.modify(task.file, updated);
+      await loadTasks(selectedKey, projects);
+    } catch (e) {
+      new Notice(`Fout bij bewerken: ${(e as Error).message}`);
+    }
+  };
+
   const handleAddTask = async (text: string, status: KanbanStatus) => {
     const targetPath = selectedKey === ALL_KEY ? (projects[0]?.path ?? null) : selectedKey;
     if (!targetPath) return;
@@ -110,71 +121,48 @@ export function KanbanPanel({ app, settings }: Props) {
   const selectedLabel = selectedKey === ALL_KEY ? "Alle projecten" : (projects.find((p) => p.path === selectedKey)?.name ?? "");
 
   return (
-    <div className="flex flex-col h-full text-sm">
+    <div className="flex h-full text-sm">
 
-      {/* Tabs */}
-      <div
-        ref={tabsRef}
-        className="flex gap-1 px-3 pt-3 overflow-x-auto border-b border-gray-800/60"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {[{ key: ALL_KEY, name: "Alle" }, ...projects.map((p) => ({ key: p.path, name: p.name }))].map(({ key, name }) => (
+      {/* Sidebar */}
+      <div className="w-28 shrink-0 flex flex-col gap-0.5 py-3 px-2 border-r border-gray-800/60 overflow-y-auto">
+        <div className="text-[10px] uppercase tracking-widest text-gray-600 font-medium px-2 mb-1">Projecten</div>
+        <button
+          onClick={() => setSelectedKey(ALL_KEY)}
+          className={`text-left px-2 py-2 rounded-md text-xs font-medium transition-colors ${
+            selectedKey === ALL_KEY ? "bg-indigo-600/20 text-indigo-300" : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+          }`}
+        >
+          Alle
+        </button>
+        {projects.map((p) => (
           <button
-            key={key}
-            onClick={() => setSelectedKey(key)}
-            className={`shrink-0 px-3 py-2 text-xs rounded-t-md transition-colors border-b-2 -mb-px ${
-              selectedKey === key
-                ? "text-gray-100 border-indigo-500 bg-gray-900"
-                : "text-gray-600 border-transparent hover:text-gray-400 hover:border-gray-700"
+            key={p.path}
+            onClick={() => setSelectedKey(p.path)}
+            className={`text-left px-2 py-2 rounded-md text-xs font-medium truncate transition-colors ${
+              selectedKey === p.path ? "bg-indigo-600/20 text-indigo-300" : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
             }`}
+            title={p.name}
           >
-            {name}
+            {p.name}
           </button>
         ))}
       </div>
 
-      <div className="flex flex-1 min-h-0">
-
-        {/* Sidebar */}
-        <div className="w-24 shrink-0 flex flex-col gap-0.5 py-2 px-1.5 border-r border-gray-800/60 overflow-y-auto">
-          <button
-            onClick={() => setSelectedKey(ALL_KEY)}
-            className={`text-left px-2 py-1.5 rounded-md text-[10px] transition-colors ${
-              selectedKey === ALL_KEY ? "bg-indigo-600/20 text-indigo-300" : "text-gray-600 hover:text-gray-400 hover:bg-gray-800"
-            }`}
-          >
-            Alle
-          </button>
-          {projects.map((p) => (
-            <button
-              key={p.path}
-              onClick={() => setSelectedKey(p.path)}
-              className={`text-left px-2 py-1.5 rounded-md text-[10px] truncate transition-colors ${
-                selectedKey === p.path ? "bg-indigo-600/20 text-indigo-300" : "text-gray-600 hover:text-gray-400 hover:bg-gray-800"
-              }`}
-              title={p.name}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
+      <div className="flex flex-col flex-1 min-w-0 min-h-0">
 
         {/* Bord */}
         <div className="flex flex-col flex-1 min-w-0 p-3 gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">K</div>
-              <span className="text-xs font-medium text-gray-300 truncate">{selectedLabel}</span>
-            </div>
-            {loading && <span className="text-[10px] text-gray-600">Laden…</span>}
+            <span className="text-xs font-semibold text-gray-200 truncate">{selectedLabel}</span>
+            {loading && <span className="text-[10px] text-gray-500">Laden…</span>}
           </div>
 
           {!loading && tasks.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 gap-2">
               <div className="text-2xl">📋</div>
-              <div className="text-xs text-gray-600 text-center">
+              <div className="text-xs text-gray-500 text-center">
                 Geen taken gevonden.<br />
-                Voeg <code className="bg-gray-800 px-1 rounded">- [ ] taak</code> toe aan een project.
+                Voeg <code className="bg-gray-800 px-1 rounded text-gray-300">- [ ] taak</code> toe aan een project.
               </div>
             </div>
           )}
@@ -196,6 +184,7 @@ export function KanbanPanel({ app, settings }: Props) {
                   onDragStart={setDraggedTask}
                   onDrop={handleDrop}
                   onAddTask={handleAddTask}
+                  onEdit={handleEditTask}
                 />
               ))}
             </div>
