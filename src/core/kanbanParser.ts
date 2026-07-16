@@ -58,6 +58,36 @@ export function extractLabel(text: string): LabelResult {
   return { label, cleanText };
 }
 
+export interface DueDateResult {
+  dateStr: string | null;
+  isOverdue: boolean;
+  isDueToday: boolean;
+  isDueSoon: boolean;
+  cleanText: string;
+}
+
+export function extractDueDate(text: string): DueDateResult {
+  const match = text.match(/#(\d{4}-\d{2}-\d{2})\b/);
+  if (!match) return { dateStr: null, isOverdue: false, isDueToday: false, isDueSoon: false, cleanText: text };
+
+  const dateStr = match[1];
+  const cleanText = text.replace(match[0], "").replace(/\s{2,}/g, " ").trim();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dateStr);
+  due.setHours(0, 0, 0, 0);
+  const diff = (due.getTime() - today.getTime()) / 86_400_000;
+
+  return {
+    dateStr,
+    isOverdue: diff < 0,
+    isDueToday: diff === 0,
+    isDueSoon: diff > 0 && diff <= 3,
+    cleanText,
+  };
+}
+
 export function updateTaskText(content: string, lineNumber: number, newText: string): string {
   const lines = content.split("\n");
   const line = lines[lineNumber];

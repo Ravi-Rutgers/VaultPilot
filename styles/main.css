@@ -15,3 +15,45 @@
 #vaultpilot-root select option {
   background-color: #111118;
 }
+
+/* Briefing Modal */
+.vaultpilot-briefing .modal-content { padding: 0; }
+.briefing-header { padding: 20px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.briefing-title { font-size: 15px; font-weight: 600; color: #e2e8f0; margin-bottom: 4px; }
+.briefing-date { font-size: 11px; color: #64748b; text-transform: capitalize; }
+.briefing-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px; max-height: 60vh; overflow-y: auto; }
+.briefing-project { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 14px; }
+.briefing-project-name { font-size: 12px; font-weight: 600; color: #a5b4fc; margin-bottom: 4px; }
+.briefing-project-recent { font-size: 10px; color: #475569; margin-bottom: 10px; }
+.briefing-task-list { margin: 0; padding: 0 0 0 14px; display: flex; flex-direction: column; gap: 4px; }
+.briefing-task { font-size: 11px; color: #94a3b8; line-height: 1.4; }
+.briefing-task-more { font-size: 10px; color: #475569; list-style: none; margin-top: 2px; }
+.briefing-no-tasks { font-size: 11px; color: #334155; }
+.briefing-open-btn { margin-top: 10px; font-size: 10px; color: #6366f1; background: none; border: none; cursor: pointer; padding: 0; }
+.briefing-open-btn:hover { color: #818cf8; }
+.briefing-ai { padding-top: 4px; }
+.briefing-ai-btn { width: 100%; padding: 10px; background: rgba(99,102,241,0.1); border: 1px dashed rgba(99,102,241,0.3); border-radius: 8px; color: #818cf8; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.briefing-ai-btn:hover { background: rgba(99,102,241,0.2); }
+.briefing-ai-label { font-size: 10px; font-weight: 600; color: #6366f1; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.briefing-ai-text { font-size: 12px; color: #94a3b8; line-height: 1.6; margin: 0; }
+.briefing-loading { font-size: 12px; color: #475569; }
+.briefing-empty { font-size: 12px; color: #475569; }
+
+/* AI Actions Modal */
+.vaultpilot-ai-actions .modal-content { padding: 0; min-width: 380px; }
+.ai-header { padding: 18px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.ai-title { font-size: 14px; font-weight: 600; color: #e2e8f0; margin-bottom: 3px; }
+.ai-filename { font-size: 10px; color: #475569; font-family: monospace; }
+.ai-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+.ai-action-btn { width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; cursor: pointer; text-align: left; display: flex; flex-direction: column; gap: 2px; transition: all 0.15s; }
+.ai-action-btn:hover { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.3); }
+.ai-action-label { font-size: 12px; font-weight: 500; color: #e2e8f0; }
+.ai-action-desc { font-size: 10px; color: #64748b; }
+.ai-result { padding: 0 16px 16px; }
+.ai-result-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.ai-result-label { font-size: 10px; font-weight: 600; color: #6366f1; text-transform: uppercase; letter-spacing: 0.05em; }
+.ai-insert-btn { font-size: 10px; padding: 3px 10px; background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); border-radius: 4px; color: #a5b4fc; cursor: pointer; }
+.ai-insert-btn:hover { background: rgba(99,102,241,0.25); }
+.ai-result-text { font-size: 12px; color: #94a3b8; line-height: 1.6; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 12px; white-space: pre-wrap; }
+.ai-loading { font-size: 12px; color: #475569; padding: 12px 0; }
+.ai-error { font-size: 12px; color: #f87171; padding: 8px; }

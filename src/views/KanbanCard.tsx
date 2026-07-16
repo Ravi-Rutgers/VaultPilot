@@ -1,5 +1,5 @@
-import React from "react";
-import { KanbanTask, extractLabel } from "../core/kanbanParser";
+import React, { useEffect, useRef } from "react";
+import { KanbanTask, extractLabel, extractDueDate } from "../core/kanbanParser";
 
 const LABEL_STYLES: Record<string, string> = {
   hoog: "bg-rose-500/20 text-rose-400",
@@ -17,14 +17,52 @@ interface Props {
 }
 
 export function KanbanCard({ task, projectColor, showProject, isDragging, onDragStart, onClick }: Props) {
-  const { label, cleanText } = extractLabel(task.text);
+  const { label, cleanText: afterLabel } = extractLabel(task.text);
+  const { dateStr, isOverdue, isDueToday, isDueSoon, cleanText } = extractDueDate(afterLabel);
   const fileLabel = task.file.basename.replace(/^\d{1,2}-\d{1,2}-\d{2,4}$/, "").trim() || task.file.basename;
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    let startX = 0, startY = 0, dragged = false;
+    const onPD = (e: PointerEvent) => { startX = e.clientX; startY = e.clientY; dragged = false; };
+    const onPU = (e: PointerEvent) => {
+      if (dragged) return;
+      if (Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) < 5) onClick();
+    };
+    const onDS = () => { dragged = true; };
+    el.addEventListener("pointerdown", onPD);
+    el.addEventListener("pointerup", onPU);
+    el.addEventListener("dragstart", onDS);
+    return () => {
+      el.removeEventListener("pointerdown", onPD);
+      el.removeEventListener("pointerup", onPU);
+      el.removeEventListener("dragstart", onDS);
+    };
+  }, [onClick]);
+
+  const dueBadgeClass = isOverdue
+    ? "bg-rose-500/20 text-rose-400 ring-1 ring-rose-500/30"
+    : isDueToday
+    ? "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30"
+    : isDueSoon
+    ? "bg-yellow-500/10 text-yellow-500"
+    : "bg-gray-800 text-gray-500";
+
+  const dueDateLabel = dateStr
+    ? isOverdue
+      ? `⚠ ${dateStr}`
+      : isDueToday
+      ? `⏰ Vandaag`
+      : dateStr
+    : null;
 
   return (
     <div
+      ref={cardRef}
       draggable
       onDragStart={onDragStart}
-      onClick={onClick}
       className={`
         bg-gray-900 ring-1 ring-white/10 rounded-lg px-2.5 py-2.5
         cursor-pointer select-none
@@ -37,16 +75,21 @@ export function KanbanCard({ task, projectColor, showProject, isDragging, onDrag
           {task.file.path.split("/")[1] ?? ""}
         </div>
       )}
-      <div className="text-xs text-gray-100 leading-snug">
-        {cleanText}
-      </div>
-      <div className="mt-1.5 flex items-center justify-between gap-1">
+      <div className="text-xs text-gray-100 leading-snug">{cleanText}</div>
+      <div className="mt-1.5 flex items-center justify-between gap-1 flex-wrap">
         <span className="text-[9px] text-gray-500 font-mono truncate">{fileLabel}</span>
-        {label && (
-          <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${LABEL_STYLES[label]}`}>
-            {label}
-          </span>
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {dueDateLabel && (
+            <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${dueBadgeClass}`}>
+              {dueDateLabel}
+            </span>
+          )}
+          {label && (
+            <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${LABEL_STYLES[label]}`}>
+              {label}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

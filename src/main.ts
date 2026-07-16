@@ -1,8 +1,10 @@
-import { Plugin, TFile, WorkspaceLeaf } from "obsidian";
+import { Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
 import { DEFAULT_SETTINGS, VaultPilotSettings } from "./settings/settings";
 import { getSupabase, signOut } from "./core/supabaseClient";
 import { trackEvent } from "./core/analyticsService";
 import { LoginModal } from "./views/LoginModal";
+import { BriefingModal } from "./views/BriefingModal";
+import { AiActionsModal } from "./views/AiActionsModal";
 import { Session } from "@supabase/supabase-js";
 import { VaultPilotSettingsTab } from "./settings/SettingsTab";
 import { DashboardView, VIEW_TYPE_DASHBOARD } from "./views/DashboardView";
@@ -104,6 +106,32 @@ export default class VaultPilotPlugin extends Plugin {
       name: "Fast Connect: Bekijk suggesties",
       callback: () => {
         this.activateView(VIEW_TYPE_DASHBOARD);
+      },
+    });
+
+    this.addCommand({
+      id: "daily-briefing",
+      name: "Dagelijkse Briefing openen",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "b" }],
+      callback: () => new BriefingModal(this.app, this.settings).open(),
+    });
+
+    this.addCommand({
+      id: "ai-actions",
+      name: "AI Quick Actions op actieve notitie",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "a" }],
+      callback: async () => {
+        if (!this.settings.groqApiKey) {
+          new Notice("Stel eerst een Groq API-sleutel in via Instellingen → VaultPilot.");
+          return;
+        }
+        const file = this.app.workspace.getActiveFile();
+        if (!file) {
+          new Notice("Geen actieve notitie geopend.");
+          return;
+        }
+        const content = await this.app.vault.read(file);
+        new AiActionsModal(this.app, file, content, this.settings.groqApiKey).open();
       },
     });
 
