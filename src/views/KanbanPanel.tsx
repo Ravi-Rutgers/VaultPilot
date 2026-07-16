@@ -10,8 +10,10 @@ import {
   updateTaskStatus,
   updateTaskText,
   appendTaskToContent,
+  deleteTask,
 } from "../core/kanbanParser";
 import { KanbanColumn } from "./KanbanColumn";
+import { KanbanCardModal } from "./KanbanCardModal";
 
 interface Props {
   app: App;
@@ -37,6 +39,7 @@ export function KanbanPanel({ app, settings }: Props) {
   const [tasks, setTasks] = useState<KanbanTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [draggedTask, setDraggedTask] = useState<KanbanTask | null>(null);
+  const [modalTask, setModalTask] = useState<KanbanTask | null>(null);
 
   useEffect(() => {
     const allFiles = app.vault.getMarkdownFiles();
@@ -99,6 +102,17 @@ export function KanbanPanel({ app, settings }: Props) {
     }
   };
 
+  const handleDeleteTask = async (task: KanbanTask) => {
+    try {
+      const content = await app.vault.read(task.file);
+      const updated = deleteTask(content, task.lineNumber);
+      await app.vault.modify(task.file, updated);
+      await loadTasks(selectedKey, projects);
+    } catch (e) {
+      new Notice(`Fout bij verwijderen: ${(e as Error).message}`);
+    }
+  };
+
   const handleAddTask = async (text: string, status: KanbanStatus) => {
     const targetPath = selectedKey === ALL_KEY ? (projects[0]?.path ?? null) : selectedKey;
     if (!targetPath) return;
@@ -149,9 +163,7 @@ export function KanbanPanel({ app, settings }: Props) {
       </div>
 
       <div className="flex flex-col flex-1 min-w-0 min-h-0">
-
-        {/* Bord */}
-        <div className="flex flex-col flex-1 min-w-0 p-3 gap-3">
+        <div className="flex flex-col flex-1 min-w-0 min-h-0 p-3 gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-200 truncate">{selectedLabel}</span>
             {loading && <span className="text-[10px] text-gray-500">Laden…</span>}
@@ -184,13 +196,30 @@ export function KanbanPanel({ app, settings }: Props) {
                   onDragStart={setDraggedTask}
                   onDrop={handleDrop}
                   onAddTask={handleAddTask}
-                  onEdit={handleEditTask}
+                  onCardClick={setModalTask}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal */}
+      {modalTask && (
+        <KanbanCardModal
+          task={modalTask}
+          app={app}
+          onClose={() => setModalTask(null)}
+          onEdit={async (newText) => {
+            await handleEditTask(modalTask, newText);
+            setModalTask(null);
+          }}
+          onDelete={async () => {
+            await handleDeleteTask(modalTask);
+            // Modal's handleDelete roept onClose() aan — geen setModalTask(null) hier
+          }}
+        />
+      )}
     </div>
   );
 }

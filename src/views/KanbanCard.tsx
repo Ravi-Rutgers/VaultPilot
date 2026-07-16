@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import { KanbanTask, extractLabel } from "../core/kanbanParser";
 
 const LABEL_STYLES: Record<string, string> = {
@@ -13,75 +13,21 @@ interface Props {
   showProject?: boolean;
   isDragging?: boolean;
   onDragStart: (e: React.DragEvent) => void;
-  onEdit?: (newText: string) => Promise<void>;
+  onClick: () => void;
 }
 
-export function KanbanCard({ task, projectColor, showProject, isDragging, onDragStart, onEdit }: Props) {
+export function KanbanCard({ task, projectColor, showProject, isDragging, onDragStart, onClick }: Props) {
   const { label, cleanText } = extractLabel(task.text);
   const fileLabel = task.file.basename.replace(/^\d{1,2}-\d{1,2}-\d{2,4}$/, "").trim() || task.file.basename;
-  const [editing, setEditing] = useState(false);
-  const [editText, setEditText] = useState(task.text);
-  const [saving, setSaving] = useState(false);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  const startEdit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!onEdit) return;
-    setEditText(task.text);
-    setEditing(true);
-    setTimeout(() => inputRef.current?.select(), 0);
-  };
-
-  const saveEdit = async () => {
-    const trimmed = editText.trim();
-    if (!trimmed || trimmed === task.text) { setEditing(false); return; }
-    setSaving(true);
-    await onEdit?.(trimmed);
-    setSaving(false);
-    setEditing(false);
-  };
-
-  if (editing) {
-    return (
-      <div className="bg-gray-900 ring-1 ring-indigo-500/60 rounded-lg px-2.5 py-2.5 flex flex-col gap-1.5">
-        <textarea
-          ref={inputRef}
-          autoFocus
-          value={editText}
-          rows={2}
-          onChange={(e) => setEditText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); saveEdit(); }
-            if (e.key === "Escape") { setEditing(false); }
-          }}
-          className="w-full bg-transparent text-xs text-gray-200 outline-none resize-none leading-snug"
-        />
-        <div className="flex gap-1">
-          <button
-            onClick={saveEdit}
-            disabled={saving}
-            className="flex-1 text-[10px] py-0.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded transition-colors"
-          >
-            {saving ? "…" : "Opslaan"}
-          </button>
-          <button
-            onClick={() => setEditing(false)}
-            className="text-[10px] px-2 py-0.5 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded transition-colors"
-          >
-            ✕
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
       draggable
       onDragStart={onDragStart}
+      onClick={onClick}
       className={`
         bg-gray-900 ring-1 ring-white/10 rounded-lg px-2.5 py-2.5
-        cursor-grab active:cursor-grabbing select-none
+        cursor-pointer select-none
         hover:ring-indigo-500/40 hover:bg-gray-800 transition-all
         ${isDragging ? "opacity-40 ring-indigo-500/60" : ""}
       `}
@@ -91,11 +37,7 @@ export function KanbanCard({ task, projectColor, showProject, isDragging, onDrag
           {task.file.path.split("/")[1] ?? ""}
         </div>
       )}
-      <div
-        className="text-xs text-gray-100 leading-snug"
-        onDoubleClick={onEdit ? startEdit : undefined}
-        title={onEdit ? "Dubbelklik om te bewerken" : undefined}
-      >
+      <div className="text-xs text-gray-100 leading-snug">
         {cleanText}
       </div>
       <div className="mt-1.5 flex items-center justify-between gap-1">
