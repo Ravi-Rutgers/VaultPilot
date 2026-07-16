@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { KanbanTask, KanbanStatus } from "../core/kanbanParser";
 import { KanbanCard } from "./KanbanCard";
 
@@ -40,8 +40,15 @@ export function KanbanColumn({
   const [saving, setSaving] = useState(false);
   const cardsRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const resetOnDragEnd = () => { setIsOver(false); setInsertIndex(null); };
+    document.addEventListener("dragend", resetOnDragEnd);
+    return () => document.removeEventListener("dragend", resetOnDragEnd);
+  }, []);
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
     setIsOver(true);
 
     if (cardsRef.current) {
