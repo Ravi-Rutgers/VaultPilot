@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { KanbanTask, KanbanStatus } from "../core/kanbanParser";
 import { KanbanCard } from "./KanbanCard";
 
@@ -15,7 +15,7 @@ interface Props {
   onDragStart: (task: KanbanTask) => void;
   onDrop: (status: KanbanStatus) => void;
   onAddTask: (text: string, status: KanbanStatus) => Promise<void>;
-  onEdit: (task: KanbanTask, newText: string) => Promise<void>;
+  onCardClick: (task: KanbanTask) => void;
 }
 
 export function KanbanColumn({
@@ -31,21 +31,43 @@ export function KanbanColumn({
   onDragStart,
   onDrop,
   onAddTask,
-  onEdit,
+  onCardClick,
 }: Props) {
   const [isOver, setIsOver] = useState(false);
+  const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [newText, setNewText] = useState("");
   const [saving, setSaving] = useState(false);
+  const cardsRef = useRef<HTMLDivElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsOver(true);
+
+    if (cardsRef.current) {
+      const cards = Array.from(cardsRef.current.querySelectorAll<HTMLElement>("[data-card]"));
+      let index = tasks.length;
+      for (let i = 0; i < cards.length; i++) {
+        const rect = cards[i].getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) {
+          index = i;
+          break;
+        }
+      }
+      setInsertIndex(index);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsOver(false);
+    setInsertIndex(null);
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsOver(false);
+    setInsertIndex(null);
     onDrop(status);
   };
 
@@ -63,9 +85,9 @@ export function KanbanColumn({
 
   return (
     <div
-      className={`flex flex-col flex-1 min-w-[140px] min-h-0 gap-2 transition-all ${isOver ? "opacity-80" : ""}`}
+      className={`flex flex-col flex-1 min-w-[140px] min-h-0 gap-2 transition-all ${isOver ? "opacity-90" : ""}`}
       onDragOver={handleDragOver}
-      onDragLeave={() => setIsOver(false)}
+      onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Kolomhoofd */}
@@ -78,32 +100,44 @@ export function KanbanColumn({
       </div>
 
       {/* Kaarten — scrollbaar */}
-      <div className={`flex flex-col gap-1.5 overflow-y-auto flex-1 min-h-0 rounded-lg transition-all ${isOver ? "ring-1 ring-indigo-500/30 bg-indigo-950/10" : ""}`}>
+      <div
+        ref={cardsRef}
+        className={`flex flex-col gap-1.5 overflow-y-auto flex-1 min-h-0 rounded-lg transition-all ${isOver ? "ring-1 ring-indigo-500/30 bg-indigo-950/10" : ""}`}
+      >
         {tasks.length === 0 && !isOver && (
           <div className="text-[10px] text-gray-700 text-center py-3 border border-dashed border-gray-800 rounded-lg">
             {emptyText}
           </div>
         )}
-        {tasks.map((task) => {
+        {tasks.map((task, i) => {
           const key = `${task.file.path}-${task.lineNumber}`;
           return (
-            <KanbanCard
-              key={key}
-              task={task}
-              showProject={showProject}
-              projectColor={projectColors?.[projectKey(task)]}
-              isDragging={draggedId === key}
-              onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = "move";
-                onDragStart(task);
-              }}
-              onEdit={(newText) => onEdit(task, newText)}
-            />
+            <React.Fragment key={key}>
+              {isOver && insertIndex === i && (
+                <div className="h-0.5 bg-indigo-400 rounded-full mx-1 shrink-0" />
+              )}
+              <div data-card>
+                <KanbanCard
+                  task={task}
+                  showProject={showProject}
+                  projectColor={projectColors?.[projectKey(task)]}
+                  isDragging={draggedId === key}
+                  onDragStart={(e) => {
+                    e.dataTransfer.effectAllowed = "move";
+                    onDragStart(task);
+                  }}
+                  onClick={() => onCardClick(task)}
+                />
+              </div>
+            </React.Fragment>
           );
         })}
+        {isOver && insertIndex === tasks.length && tasks.length > 0 && (
+          <div className="h-0.5 bg-indigo-400 rounded-full mx-1 shrink-0" />
+        )}
       </div>
 
-      {/* Toevoegen — altijd onderaan zichtbaar, scrollt niet mee */}
+      {/* Toevoegen */}
       <div className="shrink-0 pt-0.5">
         {adding ? (
           <div className="flex flex-col gap-1.5">
