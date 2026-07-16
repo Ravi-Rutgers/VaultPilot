@@ -215,7 +215,8 @@ export function KanbanPanel({ app, settings }: Props) {
             setModalTask(null);
           }}
           onDelete={async () => {
-            await handleDeleteTask(modalTask);
+            const task = modalTask;
+            await handleDeleteTask(task);
             // Modal's handleDelete roept onClose() aan — geen setModalTask(null) hier
           }}
         />
