@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { App } from "obsidian";
-import { KanbanTask, extractLabel, updateTaskText } from "../core/kanbanParser";
+import { KanbanTask, extractLabel } from "../core/kanbanParser";
 
 const LABEL_STYLES: Record<string, string> = {
   hoog: "bg-rose-500/20 text-rose-400",
