@@ -17,7 +17,7 @@ export class KanbanView extends ItemView {
 
   getViewType() { return VIEW_TYPE_KANBAN; }
   getDisplayText() { return "VaultPilot Kanban"; }
-  getIcon() { return "layout-kanban"; }
+  getIcon() { return "columns"; }
 
   async onOpen() {
     const container = this.contentEl;

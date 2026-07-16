@@ -63,22 +63,22 @@ export function KanbanColumn({
 
   return (
     <div
-      className={`flex flex-col flex-1 min-w-[120px] gap-2 transition-all ${isOver ? "opacity-80" : ""}`}
+      className={`flex flex-col flex-1 min-w-[140px] min-h-0 gap-2 transition-all ${isOver ? "opacity-80" : ""}`}
       onDragOver={handleDragOver}
       onDragLeave={() => setIsOver(false)}
       onDrop={handleDrop}
     >
       {/* Kolomhoofd */}
-      <div className={`flex items-center gap-2 pb-2 border-b-2 ${isOver ? "border-indigo-400" : accent}`}>
+      <div className={`flex items-center gap-2 pb-2 border-b-2 shrink-0 ${isOver ? "border-indigo-400" : accent}`}>
         <div className={`w-1.5 h-1.5 rounded-full ${dot} shrink-0`} />
-        <span className="text-xs font-medium text-gray-300">{label}</span>
-        <span className="ml-auto text-[10px] text-gray-600 bg-gray-800 rounded px-1.5 py-0.5 font-mono">
+        <span className="text-xs font-semibold text-gray-200">{label}</span>
+        <span className="ml-auto text-[10px] text-gray-500 bg-gray-800 rounded px-1.5 py-0.5 font-mono">
           {tasks.length}
         </span>
       </div>
 
-      {/* Kaarten */}
-      <div className={`flex flex-col gap-1.5 overflow-y-auto flex-1 rounded-lg transition-all ${isOver ? "ring-1 ring-indigo-500/30 bg-indigo-950/10" : ""}`}>
+      {/* Kaarten — scrollbaar */}
+      <div className={`flex flex-col gap-1.5 overflow-y-auto flex-1 min-h-0 rounded-lg transition-all ${isOver ? "ring-1 ring-indigo-500/30 bg-indigo-950/10" : ""}`}>
         {tasks.length === 0 && !isOver && (
           <div className="text-[10px] text-gray-700 text-center py-3 border border-dashed border-gray-800 rounded-lg">
             {emptyText}
@@ -103,45 +103,47 @@ export function KanbanColumn({
         })}
       </div>
 
-      {/* Toevoegen */}
-      {adding ? (
-        <div className="flex flex-col gap-1">
-          <textarea
-            autoFocus
-            value={newText}
-            onChange={(e) => setNewText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAdd(); }
-              if (e.key === "Escape") { setAdding(false); setNewText(""); }
-            }}
-            placeholder="Taaknaam… (Enter = opslaan)"
-            rows={2}
-            className="w-full bg-gray-900 ring-1 ring-indigo-500/50 rounded-lg px-2.5 py-2 text-xs text-gray-200 placeholder-gray-600 outline-none resize-none"
-          />
-          <div className="flex gap-1">
-            <button
-              onClick={handleAdd}
-              disabled={saving || !newText.trim()}
-              className="flex-1 text-[10px] py-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-md transition-colors"
-            >
-              {saving ? "…" : "Toevoegen"}
-            </button>
-            <button
-              onClick={() => { setAdding(false); setNewText(""); }}
-              className="text-[10px] px-2 py-1 bg-gray-800 hover:bg-gray-700 text-gray-500 rounded-md transition-colors"
-            >
-              ✕
-            </button>
+      {/* Toevoegen — altijd onderaan zichtbaar, scrollt niet mee */}
+      <div className="shrink-0 pt-0.5">
+        {adding ? (
+          <div className="flex flex-col gap-1.5">
+            <textarea
+              autoFocus
+              value={newText}
+              onChange={(e) => setNewText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAdd(); }
+                if (e.key === "Escape") { setAdding(false); setNewText(""); }
+              }}
+              placeholder="Taaknaam… (Enter = opslaan)"
+              rows={2}
+              className="w-full bg-gray-900 ring-1 ring-indigo-500/60 rounded-lg px-2.5 py-2 text-xs text-gray-200 placeholder-gray-600 outline-none resize-none"
+            />
+            <div className="flex gap-1.5">
+              <button
+                onClick={handleAdd}
+                disabled={saving || !newText.trim()}
+                className="flex-1 text-xs py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-gray-800 disabled:text-gray-600 text-white font-medium rounded-md transition-colors"
+              >
+                {saving ? "…" : "Toevoegen"}
+              </button>
+              <button
+                onClick={() => { setAdding(false); setNewText(""); }}
+                className="text-xs px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-gray-200 rounded-md transition-colors"
+              >
+                ✕
+              </button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="text-[10px] text-gray-700 hover:text-gray-400 py-1.5 flex items-center gap-1 transition-colors"
-        >
-          <span>+</span> Toevoegen
-        </button>
-      )}
+        ) : (
+          <button
+            onClick={() => setAdding(true)}
+            className="w-full text-xs text-indigo-400 hover:text-indigo-300 py-2 flex items-center justify-center gap-1.5 rounded-md border border-dashed border-indigo-800/50 hover:border-indigo-600/70 hover:bg-indigo-950/30 transition-all font-medium"
+          >
+            <span className="text-sm leading-none">+</span> Taak toevoegen
+          </button>
+        )}
+      </div>
     </div>
   );
 }
