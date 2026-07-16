@@ -99,6 +99,7 @@ export function KanbanPanel({ app, settings }: Props) {
       await loadTasks(selectedKey, projects);
     } catch (e) {
       new Notice(`Fout bij bewerken: ${(e as Error).message}`);
+      throw e;
     }
   };
 
@@ -211,8 +212,12 @@ export function KanbanPanel({ app, settings }: Props) {
           app={app}
           onClose={() => setModalTask(null)}
           onEdit={async (newText) => {
-            await handleEditTask(modalTask, newText);
-            setModalTask(null);
+            try {
+              await handleEditTask(modalTask, newText);
+              setModalTask(null);
+            } catch {
+              // handleEditTask toont Notice — modal blijft open voor retry
+            }
           }}
           onDelete={async () => {
             const task = modalTask;
