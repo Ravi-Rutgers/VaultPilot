@@ -112,7 +112,7 @@ export function KanbanCardModal({ task, app, onClose, onEdit, onDelete }: Props)
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSave(); }
-                if (e.key === "Escape") setEditing(false);
+                if (e.key === "Escape") { e.stopPropagation(); setEditing(false); }
               }}
               className="w-full bg-gray-800 ring-1 ring-indigo-500/60 rounded-lg px-3 py-2 text-sm text-gray-200 outline-none resize-none"
             />
