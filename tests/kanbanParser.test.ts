@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TFile } from "obsidian";
-import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel, appendTaskToContent, loadTasksFromFolder } from "../src/core/kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel, appendTaskToContent, loadTasksFromFolder, deleteTask } from "../src/core/kanbanParser";
 
 const mockFile = { path: "projects/Test/Test.md", basename: "Test" } as TFile;
 
@@ -170,5 +170,28 @@ describe("loadTasksFromFolder", () => {
     } as any;
     const tasks = await loadTasksFromFolder(mockApp, "projects/P/");
     expect(tasks).toHaveLength(0);
+  });
+});
+
+describe("deleteTask", () => {
+  it("verwijdert de regel op het opgegeven regelnummer", () => {
+    const content = "# Kop\n- [ ] Taak A\n- [ ] Taak B\n- [ ] Taak C";
+    const result = deleteTask(content, 1);
+    expect(result).toBe("# Kop\n- [ ] Taak B\n- [ ] Taak C");
+  });
+
+  it("verwijdert de eerste regel", () => {
+    const result = deleteTask("- [ ] Enige taak\nRegel 2", 0);
+    expect(result).toBe("Regel 2");
+  });
+
+  it("verwijdert de laatste regel", () => {
+    const result = deleteTask("Regel 0\n- [ ] Laatste taak", 1);
+    expect(result).toBe("Regel 0");
+  });
+
+  it("retourneert content ongewijzigd bij ongeldig regelnummer", () => {
+    const content = "- [ ] Taak";
+    expect(deleteTask(content, 99)).toBe(content);
   });
 });

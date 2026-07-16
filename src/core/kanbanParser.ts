@@ -88,3 +88,10 @@ export async function loadTasksFromFolder(app: App, folderPath: string): Promise
   }
   return results;
 }
+
+export function deleteTask(content: string, lineNumber: number): string {
+  const lines = content.split("\n");
+  if (lineNumber < 0 || lineNumber >= lines.length) return content;
+  lines.splice(lineNumber, 1);
+  return lines.join("\n");
+}
