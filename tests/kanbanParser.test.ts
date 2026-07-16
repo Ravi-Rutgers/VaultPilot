@@ -194,4 +194,9 @@ describe("deleteTask", () => {
     const content = "- [ ] Taak";
     expect(deleteTask(content, 99)).toBe(content);
   });
+
+  it("retourneert content ongewijzigd bij negatief regelnummer", () => {
+    const content = "- [ ] Taak";
+    expect(deleteTask(content, -1)).toBe(content);
+  });
 });
