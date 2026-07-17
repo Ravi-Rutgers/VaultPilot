@@ -449,24 +449,90 @@
     .empty-state span { font-size: 22px; }
 
     /* ─── Kanban ─── */
-    .kanban-toolbar {
+    .kanban-project-picker {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      gap: 16px;
+      text-align: center;
+    }
+    .kanban-project-picker p { font-size: 14px; color: var(--text-muted); }
+    .project-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      max-width: 500px;
+    }
+    .project-pill {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .project-pill:hover, .project-pill.active {
+      background: var(--indigo-dim);
+      border-color: var(--border-active);
+      color: var(--indigo-bright);
+    }
+
+    .kanban-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
+    .kanban-project-title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      flex: 1;
+    }
+    .kanban-meta { font-size: 12px; color: var(--text-muted); }
+    .show-done-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+    }
+    .back-to-projects {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .back-to-projects:hover { color: var(--text); border-color: var(--border-active); }
 
     .kanban-board {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+      gap: 14px;
       align-items: start;
     }
 
     .kanban-col {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       overflow: hidden;
     }
 
@@ -474,83 +540,99 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 14px 16px 12px;
+      padding: 12px 14px 10px;
       border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 56px;
+      background: var(--card);
+      z-index: 10;
     }
 
     .kanban-col-label {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 12px;
+      gap: 7px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
       color: var(--text-muted);
     }
-    .col-pip { width: 6px; height: 6px; border-radius: 50%; }
+    .col-pip { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
     .col-count {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted);
       background: var(--elevated);
       border: 1px solid var(--border);
-      padding: 1px 8px;
+      padding: 1px 7px;
       border-radius: 20px;
     }
 
-    .kanban-cards { padding: 10px; min-height: 80px; }
+    .kanban-cards { padding: 8px; min-height: 60px; }
 
     .kanban-card {
       background: var(--elevated);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 12px;
-      margin-bottom: 7px;
-      transition: all 0.15s;
+      padding: 11px 12px;
+      margin-bottom: 6px;
+      transition: border-color 0.12s;
     }
     .kanban-card:last-child { margin-bottom: 0; }
-    .kanban-card:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+    .kanban-card:active { background: rgba(255,255,255,0.04); }
 
-    .kanban-card-text { font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; margin-bottom: 10px; }
+    .kanban-card-text {
+      font-size: 13px;
+      line-height: 1.5;
+      letter-spacing: -0.01em;
+      word-break: break-word;
+      margin-bottom: 10px;
+    }
+    .kanban-card-file { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; }
 
-    .kanban-card-footer {
+    /* Status knoppen — groot en touch-vriendelijk */
+    .status-row {
+      display: flex;
+      gap: 6px;
+    }
+    .status-chip {
+      flex: 1;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-    }
-    .kanban-card-project {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--violet);
-      background: rgba(167,139,250,0.1);
-      border: 1px solid rgba(167,139,250,0.2);
-      padding: 2px 7px;
-      border-radius: 5px;
-    }
-    .kanban-card-file { font-size: 10px; color: var(--text-muted); font-family: monospace; }
-
-    .card-actions {
-      display: flex;
-      gap: 5px;
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid var(--border);
-    }
-    .card-action {
-      flex: 1;
+      justify-content: center;
+      gap: 4px;
+      min-height: 36px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
       background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 5px 8px;
-      font-size: 11px;
+      font-size: 12px;
+      font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
-      text-align: center;
       transition: all 0.12s;
-      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
     }
-    .card-action:hover { color: var(--indigo-bright); border-color: var(--border-active); background: var(--indigo-dim); }
-    .card-action.current { color: var(--text-muted); pointer-events: none; opacity: 0.5; }
+    .status-chip:active { transform: scale(0.96); }
+    .status-chip.active-todo {
+      background: rgba(71,85,105,0.2);
+      border-color: #475569;
+      color: #94a3b8;
+    }
+    .status-chip.active-doing {
+      background: rgba(96,165,250,0.15);
+      border-color: var(--blue);
+      color: var(--blue);
+    }
+    .status-chip.active-done {
+      background: rgba(16,185,129,0.15);
+      border-color: var(--emerald);
+      color: var(--emerald);
+    }
+    .status-chip:not([class*="active"]):hover {
+      border-color: var(--border-active);
+      color: var(--indigo-bright);
+      background: var(--indigo-dim);
+    }
 
     /* Project filter select */
     select {
@@ -660,24 +742,22 @@
       .stat-card { padding: 14px 10px; border-radius: 12px; }
       .stat-label { font-size: 10px; }
 
-      /* Kanban kaarten */
-      .kanban-card { padding: 10px; }
-      .kanban-card-text { font-size: 13px; word-break: break-word; }
-      .kanban-card-project {
-        max-width: 90px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .kanban-card-file { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-      /* Card actions — kleinere knoppen */
-      .card-actions { gap: 4px; }
-      .card-action { font-size: 10px; padding: 4px 4px; }
-
-      /* Kanban column count badge */
+      /* Kanban */
+      .kanban-board { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .kanban-cards { padding: 6px; }
+      .kanban-card { padding: 9px 10px; margin-bottom: 5px; }
+      .kanban-card-text { font-size: 12px; }
+      .kanban-card-file { font-size: 10px; margin-bottom: 8px; }
+      .status-row { gap: 4px; }
+      .status-chip { min-height: 32px; font-size: 10px; gap: 2px; border-radius: 7px; }
       .col-count { font-size: 10px; padding: 1px 6px; }
-      .kanban-col-hdr { padding: 11px 12px 10px; }
+      .kanban-col-hdr { padding: 10px 10px 8px; top: 50px; }
+      .kanban-col-label { font-size: 10px; gap: 5px; }
+      .kanban-project-title { font-size: 17px; }
+      .back-to-projects { font-size: 12px; padding: 5px 10px; white-space: nowrap; }
+      .show-done-toggle { font-size: 11px; padding: 5px 10px; }
+      .kanban-header { gap: 8px; margin-bottom: 14px; }
+      .project-pill { font-size: 13px; padding: 9px 16px; }
 
       /* Task items dashboard */
       .task-item { padding: 9px 11px; gap: 8px; }
@@ -830,49 +910,52 @@
 
 <!-- ═══ Kanban ═══ -->
 <div class="page" id="page-kanban">
-  <div class="kanban-toolbar">
-    <div>
+
+  <!-- Project picker -->
+  <div id="kanban-picker">
+    <div class="page-header" style="margin-bottom:20px">
       <div class="page-title">Kanban</div>
-      <div class="page-sub">Klik op een actie om de status te wijzigen</div>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <select id="project-filter" onchange="renderKanban()">
-        <option value="">Alle projecten</option>
-      </select>
       <button class="icon-btn" onclick="loadAll()">↻</button>
+    </div>
+    <div class="kanban-project-picker">
+      <p>Kies een project</p>
+      <div class="project-grid" id="project-pills"></div>
     </div>
   </div>
 
-  <div class="kanban-board">
-    <div class="kanban-col">
-      <div class="kanban-col-hdr">
-        <div class="kanban-col-label">
-          <div class="col-pip" style="background:#475569"></div>
-          Todo
-        </div>
-        <div class="col-count" id="col-todo-count">0</div>
-      </div>
-      <div class="kanban-cards" id="col-todo"></div>
+  <!-- Board -->
+  <div id="kanban-board-wrap" style="display:none">
+    <div class="kanban-header">
+      <button class="back-to-projects" onclick="showKanbanPicker()">← Projecten</button>
+      <div class="kanban-project-title" id="kanban-active-project"></div>
+      <label class="show-done-toggle">
+        <input type="checkbox" id="show-done" onchange="renderKanban()" style="accent-color:var(--indigo)">
+        Klaar tonen
+      </label>
     </div>
-    <div class="kanban-col">
-      <div class="kanban-col-hdr">
-        <div class="kanban-col-label">
-          <div class="col-pip" style="background:var(--blue)"></div>
-          Bezig
+
+    <div class="kanban-board">
+      <div class="kanban-col">
+        <div class="kanban-col-hdr">
+          <div class="kanban-col-label"><div class="col-pip" style="background:#475569"></div>Todo</div>
+          <div class="col-count" id="col-todo-count">0</div>
         </div>
-        <div class="col-count" id="col-doing-count">0</div>
+        <div class="kanban-cards" id="col-todo"></div>
       </div>
-      <div class="kanban-cards" id="col-doing"></div>
-    </div>
-    <div class="kanban-col">
-      <div class="kanban-col-hdr">
-        <div class="kanban-col-label">
-          <div class="col-pip" style="background:var(--emerald)"></div>
-          Klaar
+      <div class="kanban-col">
+        <div class="kanban-col-hdr">
+          <div class="kanban-col-label"><div class="col-pip" style="background:var(--blue)"></div>Bezig</div>
+          <div class="col-count" id="col-doing-count">0</div>
         </div>
-        <div class="col-count" id="col-done-count">0</div>
+        <div class="kanban-cards" id="col-doing"></div>
       </div>
-      <div class="kanban-cards" id="col-done"></div>
+      <div class="kanban-col">
+        <div class="kanban-col-hdr">
+          <div class="kanban-col-label"><div class="col-pip" style="background:var(--emerald)"></div>Klaar</div>
+          <div class="col-count" id="col-done-count">0</div>
+        </div>
+        <div class="kanban-cards" id="col-done"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -1077,12 +1160,6 @@ async function fetchVaultId(userId) {
 }
 
 // ── Navigation ──
-function switchTab(tab, btn) {
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  btn.classList.add("active");
-  document.getElementById("page-" + tab).classList.add("active");
-}
 
 function showApp(email) {
   document.getElementById("login-screen").style.display = "none";
@@ -1090,6 +1167,15 @@ function showApp(email) {
   document.getElementById("header-user").style.display = "flex";
   document.getElementById("user-email-label").textContent = email;
   document.getElementById("page-dashboard").classList.add("active");
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("page-" + tab).classList.add("active");
+  // Reset kanban naar picker als je naar kanban tab gaat zonder actief project
+  if (tab === "kanban" && !activeProject) showKanbanPicker();
 }
 
 // ── Data ──
@@ -1104,9 +1190,9 @@ async function loadAll() {
 
   allTasks = tasks ?? [];
   allInbox = inbox ?? [];
-  updateProjectFilter();
   renderDashboard();
-  renderKanban();
+  renderProjectPills();
+  if (activeProject) renderKanban();
   renderInboxPage();
 }
 
@@ -1148,52 +1234,84 @@ function renderDashboard() {
 }
 
 // ── Kanban ──
-function updateProjectFilter() {
-  const sel = document.getElementById("project-filter");
-  const current = sel.value;
+let activeProject = null;
+
+function showKanbanPicker() {
+  activeProject = null;
+  document.getElementById("kanban-picker").style.display = "block";
+  document.getElementById("kanban-board-wrap").style.display = "none";
+  renderProjectPills();
+}
+
+function renderProjectPills() {
   const projects = [...new Set(allTasks.map(t => t.project).filter(Boolean))].sort();
-  sel.innerHTML = '<option value="">Alle projecten</option>' +
-    projects.map(p => `<option value="${esc(p)}" ${p === current ? "selected" : ""}>${esc(p)}</option>`).join("");
+  const counts = {};
+  allTasks.forEach(t => { if (t.project) counts[t.project] = (counts[t.project] || 0) + 1; });
+  document.getElementById("project-pills").innerHTML = projects.map(p => `
+    <button class="project-pill ${p === activeProject ? 'active' : ''}" onclick="selectProject('${esc(p)}')">
+      ${esc(p)} <span style="opacity:0.5;font-weight:400;font-size:11px">${counts[p]}</span>
+    </button>
+  `).join("");
+}
+
+function selectProject(project) {
+  activeProject = project;
+  document.getElementById("kanban-picker").style.display = "none";
+  document.getElementById("kanban-board-wrap").style.display = "block";
+  document.getElementById("kanban-active-project").textContent = project;
+  renderKanban();
 }
 
 function renderKanban() {
-  const filter = document.getElementById("project-filter").value;
-  const tasks = filter ? allTasks.filter(t => t.project === filter) : allTasks;
+  if (!activeProject) { renderProjectPills(); return; }
+  const showDone = document.getElementById("show-done")?.checked;
+  const tasks = allTasks.filter(t => t.project === activeProject);
   const cols = { todo: [], doing: [], done: [] };
   for (const t of tasks) if (cols[t.status]) cols[t.status].push(t);
 
   ["todo","doing","done"].forEach(s => {
     const n = cols[s].length;
     document.getElementById("col-" + s + "-count").textContent = n > 99 ? "99+" : n;
-    renderCol(s, cols[s]);
   });
+
+  renderCol("todo", cols.todo);
+  renderCol("doing", cols.doing);
+  renderCol("done", showDone ? cols.done : []);
+
+  // Verberg done kolom als toggle uit staat
+  const doneCol = document.getElementById("col-done").closest(".kanban-col");
+  if (doneCol) doneCol.style.display = showDone ? "" : "none";
 }
 
 function renderCol(status, tasks) {
   const el = document.getElementById("col-" + status);
   if (tasks.length === 0) {
-    el.innerHTML = '<div class="empty-state" style="padding:20px 10px;font-size:12px">Leeg</div>';
+    el.innerHTML = `<div class="empty-state" style="padding:20px 8px;font-size:12px">${status === 'todo' ? '🎉 Alles opgepakt!' : status === 'doing' ? 'Niets bezig' : ''}</div>`;
     return;
   }
-  const prev = { todo: null, doing: "todo", done: "doing" };
-  const next = { todo: "doing", doing: "done", done: "todo" };
-  const prevLbl = { doing: "← Todo", done: "← Bezig" };
-  const nextLbl = { todo: "Bezig →", doing: "Klaar →", done: "↺ Reset" };
 
-  el.innerHTML = tasks.map(t => `
+  el.innerHTML = tasks.map(t => {
+    const file = t.file_path.split("/").pop() ?? "";
+    return `
     <div class="kanban-card">
       <div class="kanban-card-text">${esc(t.text)}</div>
-      <div class="kanban-card-footer">
-        ${t.project ? `<div class="kanban-card-project">${esc(t.project)}</div>` : "<div></div>"}
-        <div class="kanban-card-file">${esc(t.file_path.split("/").pop() ?? "")}</div>
+      <div class="kanban-card-file">${esc(file)}</div>
+      <div class="status-row">
+        <button class="status-chip ${status === 'todo' ? 'active-todo' : ''}"
+          onclick="${status !== 'todo' ? `updateStatus('${t.id}','todo')` : ''}">
+          ○ Todo
+        </button>
+        <button class="status-chip ${status === 'doing' ? 'active-doing' : ''}"
+          onclick="${status !== 'doing' ? `updateStatus('${t.id}','doing')` : ''}">
+          ◑ Bezig
+        </button>
+        <button class="status-chip ${status === 'done' ? 'active-done' : ''}"
+          onclick="${status !== 'done' ? `updateStatus('${t.id}','done')` : ''}">
+          ● Klaar
+        </button>
       </div>
-      <div class="card-actions">
-        ${prev[status] ? `<button class="card-action" onclick="updateStatus('${t.id}','${prev[status]}')">${prevLbl[status]}</button>` : ""}
-        <button class="card-action current">${statusLabel(status)}</button>
-        <button class="card-action" onclick="updateStatus('${t.id}','${next[status]}')">${nextLbl[status]}</button>
-      </div>
-    </div>
-  `).join("");
+    </div>`;
+  }).join("");
 }
 
 function statusLabel(s) { return s === "todo" ? "Todo" : s === "doing" ? "Bezig" : "Klaar"; }
