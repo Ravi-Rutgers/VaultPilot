@@ -720,6 +720,172 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* ─── Modal ─── */
+    #modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    #modal-overlay.open { opacity: 1; }
+
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+      transform: translateY(12px) scale(0.98);
+      transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1);
+      overflow: hidden;
+    }
+    #modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 12px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .modal-title-text {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: all 0.12s;
+    }
+    .modal-close-btn:hover { color: var(--text); background: var(--elevated); }
+
+    .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+    .modal-textarea {
+      width: 100%;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      letter-spacing: -0.01em;
+      line-height: 1.6;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .modal-textarea:focus {
+      border-color: var(--border-active);
+      box-shadow: 0 0 0 3px var(--indigo-dim);
+    }
+
+    .modal-status-row { display: flex; gap: 6px; }
+
+    .modal-meta { font-size: 11px; color: var(--text-muted); }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px 18px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .modal-delete-btn {
+      background: none;
+      border: 1px solid rgba(251,113,133,0.25);
+      color: var(--rose);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .modal-delete-btn:hover { background: rgba(251,113,133,0.1); border-color: rgba(251,113,133,0.5); }
+
+    .modal-cancel-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .modal-cancel-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+    .modal-save-btn {
+      background: linear-gradient(135deg, var(--indigo), #7c3aed);
+      border: none;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px var(--indigo-glow);
+      transition: all 0.15s;
+    }
+    .modal-save-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .confirm-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px 18px;
+      border-top: 1px solid rgba(251,113,133,0.15);
+      background: rgba(251,113,133,0.04);
+      animation: fadein 0.15s ease;
+    }
+    .confirm-text { font-size: 13px; color: var(--rose); font-weight: 500; }
+    .confirm-cancel-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .confirm-cancel-btn:hover { color: var(--text); }
+    .confirm-delete-btn {
+      background: var(--rose);
+      border: none;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .confirm-delete-btn:hover { opacity: 0.85; }
+
     @media (max-width: 720px) {
       /* Layout */
       .two-col { grid-template-columns: 1fr; }
@@ -987,6 +1153,39 @@
   <div id="inbox-full-list"><div class="empty-state"><span>⏳</span>Laden…</div></div>
 </div>
 
+<!-- ═══ Modal ═══ -->
+<div id="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title-text" id="modal-title"></span>
+      <button class="modal-close-btn" onclick="_closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea class="modal-textarea" id="modal-textarea" rows="4"></textarea>
+      <div class="modal-status-row" id="modal-status-row" style="display:none">
+        <button class="status-chip modal-status-chip" data-status="todo" onclick="setModalStatus('todo')">○ Todo</button>
+        <button class="status-chip modal-status-chip" data-status="doing" onclick="setModalStatus('doing')">◑ Bezig</button>
+        <button class="status-chip modal-status-chip" data-status="done" onclick="setModalStatus('done')">● Klaar</button>
+      </div>
+      <div class="modal-meta" id="modal-meta"></div>
+    </div>
+    <div class="modal-footer" id="modal-footer-main">
+      <button class="modal-delete-btn" onclick="showDeleteConfirm()">Verwijderen</button>
+      <div style="display:flex;gap:8px">
+        <button class="modal-cancel-btn" onclick="_closeModal()">Annuleren</button>
+        <button class="modal-save-btn" onclick="saveModal()">Opslaan</button>
+      </div>
+    </div>
+    <div class="confirm-bar" id="confirm-bar" style="display:none">
+      <span class="confirm-text">Weet je het zeker?</span>
+      <div style="display:flex;gap:8px">
+        <button class="confirm-cancel-btn" onclick="cancelDelete()">Annuleren</button>
+        <button class="confirm-delete-btn" onclick="confirmDelete()">Ja, verwijder</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1214,8 +1413,8 @@ function renderDashboard() {
     taskEl.innerHTML = open.slice(0, 20).map(t => `
       <div class="task-item">
         <button class="status-btn ${t.status}" title="Wijzig status" onclick="cycleStatus('${t.id}','${t.status}')"></button>
-        <div class="task-text ${t.status === 'done' ? 'done' : ''}">${esc(t.text)}</div>
-        ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ""}
+        <div class="task-text ${t.status === 'done' ? 'done' : ''}" onclick="openTaskModal('${t.id}')" style="cursor:pointer">${esc(t.text)}</div>
+        ${t.project ? `<div class="task-project" onclick="openTaskModal('${t.id}')" style="cursor:pointer">${esc(t.project)}</div>` : ""}
       </div>
     `).join("");
   }
@@ -1225,7 +1424,7 @@ function renderDashboard() {
     inboxEl.innerHTML = '<div class="empty-state"><span>✅</span>Inbox leeg</div>';
   } else {
     inboxEl.innerHTML = allInbox.slice(0, 12).map(item => `
-      <div class="inbox-item">
+      <div class="inbox-item" onclick="openInboxModal('${item.id}')" style="cursor:pointer">
         <div class="inbox-title">${esc(item.title)}</div>
         <div class="inbox-date">${fmtDate(item.created_at)}</div>
       </div>
@@ -1294,8 +1493,8 @@ function renderCol(status, tasks) {
     const file = t.file_path.split("/").pop() ?? "";
     return `
     <div class="kanban-card">
-      <div class="kanban-card-text">${esc(t.text)}</div>
-      <div class="kanban-card-file">${esc(file)}</div>
+      <div class="kanban-card-text" onclick="openTaskModal('${t.id}')" style="cursor:pointer">${esc(t.text)}</div>
+      <div class="kanban-card-file" onclick="openTaskModal('${t.id}')" style="cursor:pointer">${esc(file)}</div>
       <div class="status-row">
         <button class="status-chip ${status === 'todo' ? 'active-todo' : ''}"
           onclick="${status !== 'todo' ? `updateStatus('${t.id}','todo')` : ''}">
@@ -1349,7 +1548,7 @@ function renderInboxPage() {
     return;
   }
   el.innerHTML = allInbox.map(item => `
-    <div class="inbox-item">
+    <div class="inbox-item" onclick="openInboxModal('${item.id}')" style="cursor:pointer">
       <div class="inbox-title">${esc(item.title)}</div>
       <div class="inbox-date">${fmtDate(item.created_at)}</div>
     </div>
@@ -1398,6 +1597,167 @@ function toast(msg) {
   el.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+// ── Modal ──
+let modalMode = null;
+let modalItemId = null;
+let modalCurrentStatus = "todo";
+
+function openTaskModal(id) {
+  const task = allTasks.find(t => t.id === id);
+  if (!task) return;
+  modalMode = "task";
+  modalItemId = id;
+  modalCurrentStatus = task.status;
+
+  document.getElementById("modal-title").textContent = task.project ?? "Taak";
+  document.getElementById("modal-textarea").value = task.text;
+  document.getElementById("modal-status-row").style.display = "flex";
+  _syncStatusChips();
+  document.getElementById("modal-meta").textContent = task.file_path.split("/").pop() ?? "";
+  _resetConfirm();
+  _openModal();
+}
+
+function openInboxModal(id) {
+  const item = allInbox.find(i => i.id === id);
+  if (!item) return;
+  modalMode = "inbox";
+  modalItemId = id;
+
+  document.getElementById("modal-title").textContent = "Inbox item";
+  document.getElementById("modal-textarea").value = item.title;
+  document.getElementById("modal-status-row").style.display = "none";
+  document.getElementById("modal-meta").textContent = fmtDate(item.created_at);
+  _resetConfirm();
+  _openModal();
+}
+
+function _openModal() {
+  const overlay = document.getElementById("modal-overlay");
+  overlay.style.display = "flex";
+  requestAnimationFrame(() => overlay.classList.add("open"));
+  setTimeout(() => document.getElementById("modal-textarea").focus(), 50);
+  document.addEventListener("keydown", _handleModalKey);
+}
+
+function closeModal(event) {
+  if (event && event.target !== document.getElementById("modal-overlay")) return;
+  _closeModal();
+}
+
+function _closeModal() {
+  const overlay = document.getElementById("modal-overlay");
+  overlay.classList.remove("open");
+  setTimeout(() => { overlay.style.display = "none"; }, 200);
+  document.removeEventListener("keydown", _handleModalKey);
+  modalMode = null;
+  modalItemId = null;
+}
+
+function _handleModalKey(e) {
+  if (e.key === "Escape") _closeModal();
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) saveModal();
+}
+
+function setModalStatus(status) {
+  modalCurrentStatus = status;
+  _syncStatusChips();
+}
+
+function _syncStatusChips() {
+  document.querySelectorAll(".modal-status-chip").forEach(c => {
+    const s = c.dataset.status;
+    c.classList.toggle("active-todo",  s === "todo"  && modalCurrentStatus === "todo");
+    c.classList.toggle("active-doing", s === "doing" && modalCurrentStatus === "doing");
+    c.classList.toggle("active-done",  s === "done"  && modalCurrentStatus === "done");
+  });
+}
+
+async function saveModal() {
+  const text = document.getElementById("modal-textarea").value.trim();
+  if (!text) return;
+
+  if (modalMode === "task") {
+    const task = allTasks.find(t => t.id === modalItemId);
+    if (!task) return;
+    const oldText = task.text, oldStatus = task.status;
+    task.text = text;
+    task.status = modalCurrentStatus;
+    renderDashboard(); renderKanban();
+
+    const { error } = await sb.from("vault_tasks")
+      .update({ text, status: modalCurrentStatus }).eq("id", modalItemId);
+    if (error) {
+      task.text = oldText; task.status = oldStatus;
+      renderDashboard(); renderKanban();
+      toast("❌ Fout bij opslaan"); return;
+    }
+    toast("✓ Taak bijgewerkt");
+  } else {
+    const item = allInbox.find(i => i.id === modalItemId);
+    if (!item) return;
+    const oldTitle = item.title;
+    item.title = text;
+    renderInboxPage(); renderDashboard();
+
+    const { error } = await sb.from("inbox_items")
+      .update({ title: text }).eq("id", modalItemId);
+    if (error) {
+      item.title = oldTitle;
+      renderInboxPage(); renderDashboard();
+      toast("❌ Fout bij opslaan"); return;
+    }
+    toast("✓ Item bijgewerkt");
+  }
+  _closeModal();
+}
+
+function showDeleteConfirm() {
+  document.getElementById("modal-footer-main").style.display = "none";
+  document.getElementById("confirm-bar").style.display = "flex";
+}
+
+function cancelDelete() {
+  document.getElementById("confirm-bar").style.display = "none";
+  document.getElementById("modal-footer-main").style.display = "flex";
+}
+
+function _resetConfirm() {
+  document.getElementById("confirm-bar").style.display = "none";
+  document.getElementById("modal-footer-main").style.display = "flex";
+}
+
+async function confirmDelete() {
+  if (modalMode === "task") {
+    const idx = allTasks.findIndex(t => t.id === modalItemId);
+    if (idx === -1) return;
+    const [removed] = allTasks.splice(idx, 1);
+    renderDashboard(); renderKanban();
+
+    const { error } = await sb.from("vault_tasks").delete().eq("id", modalItemId);
+    if (error) {
+      allTasks.splice(idx, 0, removed);
+      renderDashboard(); renderKanban();
+      toast("❌ Fout bij verwijderen"); return;
+    }
+    toast("🗑 Taak verwijderd");
+  } else {
+    const idx = allInbox.findIndex(i => i.id === modalItemId);
+    if (idx === -1) return;
+    const [removed] = allInbox.splice(idx, 1);
+    renderInboxPage(); renderDashboard();
+
+    const { error } = await sb.from("inbox_items").delete().eq("id", modalItemId);
+    if (error) {
+      allInbox.splice(idx, 0, removed);
+      renderInboxPage(); renderDashboard();
+      toast("❌ Fout bij verwijderen"); return;
+    }
+    toast("🗑 Item verwijderd");
+  }
+  _closeModal();
 }
 
 // ── Session restore ──
