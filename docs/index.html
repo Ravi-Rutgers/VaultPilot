@@ -691,7 +691,12 @@
           <input type="email" id="email-input" placeholder="jou@email.com"
             onkeydown="if(event.key==='Enter')sendOtp()" autofocus />
         </div>
-        <button class="btn btn-primary" onclick="sendOtp()" style="margin-top:16px" id="otp-send-btn">Code sturen</button>
+        <label style="display:flex;align-items:center;gap:9px;margin-top:16px;cursor:pointer;user-select:none">
+          <input type="checkbox" id="remember-me" checked
+            style="width:16px;height:16px;accent-color:var(--indigo);cursor:pointer;flex-shrink:0" />
+          <span style="font-size:12px;color:var(--text-muted)">Aangemeld blijven op dit apparaat</span>
+        </label>
+        <button class="btn btn-primary" onclick="sendOtp()" style="margin-top:14px" id="otp-send-btn">Code sturen</button>
         <div class="error-msg" id="email-error" style="margin-top:12px;display:none"></div>
       </div>
 
@@ -856,7 +861,14 @@
 <script>
 const SUPABASE_URL = "https://knaydptymtnbeyjwirbx.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuYXlkcHR5bXRuYmV5andpcmJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQzMjUsImV4cCI6MjA5OTU0MDMyNX0.ySQY7BkIbQrr8JpzXh0j0uAWX1erKPZxiIrhq8z_Tvw";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: "vaultpilot-session",
+    storage: window.localStorage,
+  }
+});
 
 let currentEmail = "";
 let allTasks = [];
@@ -981,14 +993,17 @@ async function verifyOtp() {
       ? `Code verlopen of ongeldig. <strong>Vraag hieronder een nieuwe code aan.</strong>`
       : msg;
     errEl.style.display = "block";
-
-    // Reset boxes
     document.querySelectorAll(".otp-digit").forEach(b => { b.value = ""; b.classList.remove("filled"); });
     document.querySelectorAll(".otp-digit")[0].focus();
     return;
   }
 
   clearInterval(countdownTimer);
+
+  // Sla voorkeur op
+  const remember = document.getElementById("remember-me")?.checked !== false;
+  localStorage.setItem("vaultpilot-remember", remember ? "1" : "0");
+
   await fetchVaultId(data.session.user.id);
   showApp(data.session.user.email);
   loadAll();
@@ -1224,6 +1239,17 @@ sb.auth.getSession().then(async ({ data }) => {
     await fetchVaultId(data.session.user.id);
     showApp(data.session.user.email);
     loadAll();
+    return;
+  }
+  // Probeer token te refreshen als er een opgeslagen sessie was
+  const remember = localStorage.getItem("vaultpilot-remember");
+  if (remember === "1") {
+    const { data: refreshed } = await sb.auth.refreshSession();
+    if (refreshed?.session) {
+      await fetchVaultId(refreshed.session.user.id);
+      showApp(refreshed.session.user.email);
+      loadAll();
+    }
   }
 });
 </script>
