@@ -908,22 +908,41 @@
       .stat-card { padding: 14px 10px; border-radius: 12px; }
       .stat-label { font-size: 10px; }
 
-      /* Kanban */
-      .kanban-board { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-      .kanban-cards { padding: 6px; }
-      .kanban-card { padding: 9px 10px; margin-bottom: 5px; }
-      .kanban-card-text { font-size: 12px; }
-      .kanban-card-file { font-size: 10px; margin-bottom: 8px; }
-      .status-row { gap: 4px; }
-      .status-chip { min-height: 32px; font-size: 10px; gap: 2px; border-radius: 7px; }
-      .col-count { font-size: 10px; padding: 1px 6px; }
-      .kanban-col-hdr { padding: 10px 10px 8px; top: 50px; }
-      .kanban-col-label { font-size: 10px; gap: 5px; }
+      /* Kanban — horizontaal scrollbaar op mobiel */
+      #page-kanban { padding-left: 0; padding-right: 0; }
+      .kanban-header { gap: 8px; margin-bottom: 14px; padding: 0 14px; }
+      .kanban-board {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        gap: 10px;
+        padding: 0 14px 12px;
+        grid-template-columns: unset;
+      }
+      .kanban-col {
+        flex: 0 0 82vw;
+        max-width: 320px;
+        scroll-snap-align: start;
+      }
+      .kanban-cards { padding: 8px; }
+      .kanban-card { padding: 11px 12px; margin-bottom: 6px; }
+      .kanban-card-text { font-size: 13px; }
+      .kanban-card-file { font-size: 11px; margin-bottom: 10px; }
+      .status-row { gap: 6px; }
+      .status-chip { min-height: 38px; font-size: 12px; border-radius: 8px; }
+      .col-count { font-size: 11px; padding: 1px 7px; }
+      .kanban-col-hdr { padding: 12px 14px 10px; top: 50px; }
+      .kanban-col-label { font-size: 11px; gap: 6px; }
       .kanban-project-title { font-size: 17px; }
       .back-to-projects { font-size: 12px; padding: 5px 10px; white-space: nowrap; }
       .show-done-toggle { font-size: 11px; padding: 5px 10px; }
-      .kanban-header { gap: 8px; margin-bottom: 14px; }
       .project-pill { font-size: 13px; padding: 9px 16px; }
+      .kanban-project-picker { padding: 0 14px; }
+
+      /* Kaartcontrast verbeteren */
+      .kanban-card { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.09); }
 
       /* Task items dashboard */
       .task-item { padding: 9px 11px; gap: 8px; }
