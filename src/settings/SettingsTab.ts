@@ -92,5 +92,22 @@ export class VaultPilotSettingsTab extends PluginSettingTab {
         text.inputEl.setAttribute("type", "password");
         return text;
       });
+
+    containerEl.createEl("h3", { text: "Claude AI (taakbeheer)" });
+
+    new Setting(containerEl)
+      .setName("Claude API-sleutel")
+      .setDesc("Vereist voor Claude Chat (⌃⇧E). Verkrijg een sleutel op console.anthropic.com")
+      .addText((text) => {
+        text
+          .setPlaceholder("sk-ant-...")
+          .setValue(this.plugin.settings.claudeApiKey)
+          .onChange(async (value) => {
+            this.plugin.settings.claudeApiKey = value.trim();
+            await this.plugin.saveSettings();
+          });
+        text.inputEl.setAttribute("type", "password");
+        return text;
+      });
   }
 }

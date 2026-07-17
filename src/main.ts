@@ -6,6 +6,7 @@ import { syncVaultToCloud } from "./core/webCompanion";
 import { LoginModal } from "./views/LoginModal";
 import { BriefingModal } from "./views/BriefingModal";
 import { AiActionsModal } from "./views/AiActionsModal";
+import { ClaudeChatModal } from "./views/ClaudeChatModal";
 import { Session } from "@supabase/supabase-js";
 import { VaultPilotSettingsTab } from "./settings/SettingsTab";
 import { DashboardView, VIEW_TYPE_DASHBOARD } from "./views/DashboardView";
@@ -116,6 +117,19 @@ export default class VaultPilotPlugin extends Plugin {
       name: "Dagelijkse Briefing openen",
       hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "b" }],
       callback: () => new BriefingModal(this.app, this.settings).open(),
+    });
+
+    this.addCommand({
+      id: "claude-chat",
+      name: "Claude Chat openen",
+      hotkeys: [{ modifiers: ["Ctrl", "Shift"], key: "e" }],
+      callback: () => {
+        if (!this.settings.claudeApiKey) {
+          new Notice("Stel eerst een Claude API-sleutel in via Instellingen → VaultPilot.");
+          return;
+        }
+        new ClaudeChatModal(this.app, this.settings).open();
+      },
     });
 
     this.addCommand({

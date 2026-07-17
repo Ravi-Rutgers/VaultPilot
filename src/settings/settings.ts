@@ -4,6 +4,7 @@ export interface VaultPilotSettings {
   ideasFolder: string;
   orphanThresholdDays: number;
   groqApiKey: string;
+  claudeApiKey: string;
   fastConnectMinConfidence: number;
   userEmail: string;
   vaultId: string;
@@ -17,6 +18,7 @@ export const DEFAULT_SETTINGS: VaultPilotSettings = {
   ideasFolder: "ideas/",
   orphanThresholdDays: 30,
   groqApiKey: "",
+  claudeApiKey: "",
   fastConnectMinConfidence: 0.6,
   userEmail: "",
   vaultId: "",
