@@ -1,10 +1,10 @@
 {
   "id": "vaultpilot",
   "name": "VaultPilot",
-  "version": "1.5.0",
+  "version": "1.7.0",
   "minAppVersion": "1.4.0",
-  "description": "De cockpit voor je Obsidian vault — dashboard, quick capture en vault cleaner.",
-  "author": "ravir",
-  "authorUrl": "",
+  "description": "The cockpit for your Obsidian vault — dashboard, kanban, quick capture, smart graph and vault cleaner.",
+  "author": "Ravi Rutgers",
+  "authorUrl": "https://github.com/Ravi-Rutgers",
   "isDesktopOnly": false
 }
