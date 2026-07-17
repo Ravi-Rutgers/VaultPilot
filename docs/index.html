@@ -9,44 +9,61 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f0f17;
-      --surface: #1a1a28;
-      --elevated: #22223a;
-      --border: rgba(255,255,255,0.07);
-      --border-hover: rgba(255,255,255,0.13);
+      --bg: #07070f;
+      --surface: #0f0f1a;
+      --card: #13131f;
+      --elevated: #1c1c2e;
+      --border: rgba(255,255,255,0.06);
+      --border-subtle: rgba(255,255,255,0.03);
+      --border-active: rgba(99,102,241,0.5);
       --indigo: #6366f1;
-      --indigo-dim: rgba(99,102,241,0.15);
-      --indigo-hover: #818cf8;
-      --text: #e2e8f0;
+      --indigo-bright: #818cf8;
+      --indigo-dim: rgba(99,102,241,0.12);
+      --indigo-glow: rgba(99,102,241,0.25);
+      --text: #f1f5f9;
       --text-muted: #64748b;
-      --text-dim: #334155;
-      --rose: #f87171;
-      --amber: #fbbf24;
-      --emerald: #34d399;
+      --text-dim: #1e293b;
+      --rose: #fb7185;
+      --amber: #f59e0b;
+      --emerald: #10b981;
       --violet: #a78bfa;
       --blue: #60a5fa;
+      --sky: #38bdf8;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── Header ── */
+    /* ─── Mesh gradient bg ─── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99,102,241,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(167,139,250,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── Header ─── */
     header {
+      position: sticky;
+      top: 0;
+      z-index: 200;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
-      height: 52px;
+      padding: 0 28px;
+      height: 56px;
+      background: rgba(7,7,15,0.85);
+      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      z-index: 100;
     }
 
     .logo {
@@ -56,32 +73,36 @@
     }
 
     .logo-icon {
-      width: 26px;
-      height: 26px;
-      background: var(--indigo);
-      border-radius: 7px;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--indigo) 0%, var(--violet) 100%);
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 800;
       color: white;
+      box-shadow: 0 0 16px var(--indigo-glow);
     }
 
     .logo-name {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 700;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, var(--text) 60%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
-    /* ── Tab nav ── */
     .tab-nav {
       display: flex;
       align-items: center;
       gap: 2px;
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
     }
 
     .tab-btn {
@@ -90,16 +111,19 @@
       color: var(--text-muted);
       font-size: 13px;
       font-weight: 500;
-      padding: 6px 14px;
-      border-radius: 8px;
+      padding: 5px 16px;
+      border-radius: 7px;
       cursor: pointer;
       transition: all 0.15s;
+      letter-spacing: -0.01em;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--text);
+      background: var(--elevated);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
 
-    .tab-btn:hover { color: var(--text); background: var(--elevated); }
-    .tab-btn.active { color: var(--text); background: var(--elevated); }
-
-    /* ── User pill ── */
     .user-pill {
       display: flex;
       align-items: center;
@@ -108,191 +132,325 @@
       color: var(--text-muted);
     }
 
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); flex-shrink: 0; }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 6px rgba(16,185,129,0.6);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
 
     .logout-btn {
       background: none;
-      border: none;
-      color: var(--text-dim);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
       cursor: pointer;
-      font-size: 12px;
-      padding: 4px 8px;
-      border-radius: 5px;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: all 0.15s;
     }
-    .logout-btn:hover { color: var(--rose); background: rgba(248,113,113,0.08); }
+    .logout-btn:hover { color: var(--rose); border-color: rgba(251,113,133,0.3); }
 
-    /* ── Main layout ── */
-    .page { display: none; max-width: 960px; margin: 0 auto; padding: 32px 24px; }
-    .page.active { display: block; }
+    /* ─── Pages ─── */
+    .page { display: none; position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 36px 28px 60px; }
+    .page.active { display: block; animation: fadein 0.2s ease; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-    /* ── Login ── */
+    /* ─── Login ─── */
     #login-screen {
+      position: relative;
+      z-index: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 90vh;
+      min-height: calc(100vh - 56px);
+      padding: 40px 24px;
+    }
+
+    .login-wrap { width: 100%; max-width: 380px; }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      justify-content: center;
     }
 
     .login-card {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 20px;
       padding: 32px;
-      width: 100%;
-      max-width: 380px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 22px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
     }
 
-    .login-title { font-size: 20px; font-weight: 700; }
-    .login-sub { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-top: 6px; }
+    .login-title { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+    .login-sub { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-top: 4px; }
 
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
 
     input[type="email"], input[type="text"] {
       background: var(--elevated);
       border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 14px;
+      border-radius: 10px;
+      padding: 11px 14px;
       font-size: 14px;
       color: var(--text);
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.15s, box-shadow 0.15s;
       width: 100%;
+      letter-spacing: -0.01em;
     }
-    input:focus { border-color: var(--indigo); }
-
-    .btn {
-      padding: 11px 20px;
-      border-radius: 9px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: all 0.15s;
+    input:focus {
+      border-color: var(--border-active);
+      box-shadow: 0 0 0 3px var(--indigo-dim);
     }
+    input::placeholder { color: var(--text-muted); opacity: 0.5; }
 
-    .btn-primary { background: var(--indigo); color: white; width: 100%; }
-    .btn-primary:hover { background: var(--indigo-hover); }
-    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    .btn-sm {
-      padding: 6px 14px;
-      border-radius: 7px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: all 0.15s;
+    /* OTP digit boxes */
+    .otp-boxes {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
     }
-    .btn-indigo { background: var(--indigo); color: white; }
-    .btn-indigo:hover { background: var(--indigo-hover); }
-    .btn-ghost { background: var(--elevated); border: 1px solid var(--border); color: var(--text-muted); }
-    .btn-ghost:hover { color: var(--text); border-color: var(--border-hover); }
-
-    .error-msg { font-size: 12px; color: var(--rose); }
-
-    /* ── Dashboard page ── */
-    .page-title {
+    .otp-digit {
+      width: 48px;
+      height: 56px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       font-size: 22px;
       font-weight: 700;
-      letter-spacing: -0.02em;
+      text-align: center;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      caret-color: var(--indigo);
+      letter-spacing: 0;
+    }
+    .otp-digit:focus {
+      border-color: var(--border-active);
+      box-shadow: 0 0 0 3px var(--indigo-dim);
+    }
+    .otp-digit.filled { border-color: rgba(99,102,241,0.3); color: var(--indigo-bright); }
+
+    .btn {
+      width: 100%;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      letter-spacing: -0.01em;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--indigo) 0%, #7c3aed 100%);
+      color: white;
+      box-shadow: 0 4px 16px var(--indigo-glow);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--indigo-glow); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .error-msg {
+      font-size: 12px;
+      color: var(--rose);
+      background: rgba(251,113,133,0.08);
+      border: 1px solid rgba(251,113,133,0.2);
+      border-radius: 8px;
+      padding: 9px 12px;
+      line-height: 1.5;
     }
 
-    .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .back-link {
+      background: none; border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      text-align: center;
+      display: block;
+      width: 100%;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: var(--text); }
 
-    .stats-row {
+    .countdown {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .countdown.urgent { color: var(--amber); }
+
+    /* ─── Page header ─── */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.03em; }
+    .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+
+    .icon-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 9px;
+      padding: 7px 14px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .icon-btn:hover { color: var(--text); border-color: var(--border-active); }
+
+    /* ─── Stats ─── */
+    .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 24px;
+      gap: 14px;
       margin-bottom: 32px;
     }
 
     .stat-card {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px 16px;
+      border-radius: 16px;
+      padding: 22px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-color, var(--indigo)), transparent);
+      opacity: 0.5;
+    }
+    .stat-card:hover { border-color: rgba(255,255,255,0.1); }
+
+    .stat-icon { font-size: 18px; margin-bottom: 12px; }
+    .stat-num { font-size: 36px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+    /* ─── Section ─── */
+    .section-hdr {
       display: flex;
-      flex-direction: column;
       align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-left { display: flex; align-items: center; gap: 8px; }
+    .section-pip { width: 3px; height: 16px; border-radius: 2px; }
+    .section-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+    .section-badge {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      padding: 1px 8px;
+      border-radius: 20px;
     }
 
-    .stat-bar { width: 28px; height: 2px; border-radius: 1px; margin-bottom: 12px; }
-    .stat-num { font-size: 32px; font-weight: 700; line-height: 1; }
-    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+    /* ─── Two-col ─── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
 
-    /* ── Section header ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .section-accent { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
-    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
-    .section-count { font-size: 11px; color: var(--text-dim); background: var(--elevated); padding: 2px 8px; border-radius: 10px; }
-
-    /* ── Task items (dashboard) ── */
+    /* ─── Task items ─── */
     .task-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 14px;
+      border-radius: 10px;
+      padding: 11px 14px;
       font-size: 13px;
-      margin-bottom: 4px;
-      transition: border-color 0.12s;
+      margin-bottom: 5px;
+      transition: all 0.12s;
+      cursor: default;
     }
-    .task-item:hover { border-color: var(--border-hover); }
+    .task-item:hover { border-color: rgba(255,255,255,0.09); background: var(--elevated); }
 
-    .status-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; cursor: pointer;
-      transition: transform 0.1s;
+    .status-btn {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 1.5px solid var(--text-dim);
+      flex-shrink: 0;
+      cursor: pointer;
+      margin-top: 1px;
+      transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+      background: none;
     }
-    .status-dot:hover { transform: scale(1.3); }
-    .status-todo { background: var(--text-dim); }
-    .status-doing { background: var(--blue); }
-    .status-done { background: var(--emerald); opacity: 0.5; }
+    .status-btn:hover { border-color: var(--indigo); background: var(--indigo-dim); }
+    .status-btn.doing { border-color: var(--blue); background: rgba(96,165,250,0.15); }
+    .status-btn.doing::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--blue); }
+    .status-btn.done { border-color: var(--emerald); background: rgba(16,185,129,0.15); }
+    .status-btn.done::after { content: "✓"; font-size: 9px; color: var(--emerald); line-height: 1; }
 
-    .task-text { flex: 1; line-height: 1.4; }
+    .task-text { flex: 1; line-height: 1.5; letter-spacing: -0.01em; }
     .task-text.done { color: var(--text-muted); text-decoration: line-through; }
-    .task-project { font-size: 10px; color: var(--violet); font-weight: 600; flex-shrink: 0; }
-    .task-file { font-size: 10px; color: var(--text-dim); font-family: monospace; flex-shrink: 0; }
+    .task-project {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--violet);
+      background: rgba(167,139,250,0.1);
+      border: 1px solid rgba(167,139,250,0.2);
+      padding: 2px 7px;
+      border-radius: 5px;
+      flex-shrink: 0;
+      align-self: flex-start;
+    }
 
-    /* ── Inbox items ── */
+    /* ─── Inbox items ─── */
     .inbox-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 14px;
-      margin-bottom: 4px;
-      transition: border-color 0.12s;
+      border-radius: 10px;
+      padding: 11px 14px;
+      margin-bottom: 5px;
+      transition: all 0.12s;
     }
-    .inbox-item:hover { border-color: var(--border-hover); }
-    .inbox-title { font-size: 13px; }
-    .inbox-date { font-size: 11px; color: var(--text-dim); }
+    .inbox-item:hover { border-color: rgba(255,255,255,0.09); background: var(--elevated); }
+    .inbox-title { font-size: 13px; letter-spacing: -0.01em; }
+    .inbox-date { font-size: 11px; color: var(--text-muted); flex-shrink: 0; margin-left: 12px; }
 
-    .empty-state { font-size: 13px; color: var(--text-dim); padding: 24px; text-align: center; }
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      gap: 6px;
+    }
+    .empty-state span { font-size: 22px; }
 
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 8px; }
-
-    /* ── Kanban page ── */
+    /* ─── Kanban ─── */
     .kanban-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
 
     .kanban-board {
@@ -303,357 +461,392 @@
     }
 
     .kanban-col {
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px;
-      min-height: 200px;
+      border-radius: 16px;
+      overflow: hidden;
     }
 
-    .kanban-col-header {
+    .kanban-col-hdr {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .kanban-col-label {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       color: var(--text-muted);
     }
+    .col-pip { width: 6px; height: 6px; border-radius: 50%; }
+    .col-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      padding: 1px 8px;
+      border-radius: 20px;
+    }
 
-    .col-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .col-count { font-size: 11px; color: var(--text-dim); background: var(--elevated); padding: 1px 7px; border-radius: 10px; }
+    .kanban-cards { padding: 10px; min-height: 80px; }
 
     .kanban-card {
       background: var(--elevated);
       border: 1px solid var(--border);
-      border-radius: 9px;
-      padding: 10px 12px;
-      margin-bottom: 6px;
-      cursor: pointer;
-      transition: border-color 0.12s, background 0.12s;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 7px;
+      transition: all 0.15s;
     }
-    .kanban-card:hover { border-color: var(--border-hover); background: rgba(255,255,255,0.03); }
     .kanban-card:last-child { margin-bottom: 0; }
+    .kanban-card:hover { border-color: rgba(255,255,255,0.1); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
 
-    .kanban-card-text { font-size: 13px; line-height: 1.5; }
-    .kanban-card-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
-    .kanban-card-project { font-size: 10px; color: var(--violet); font-weight: 600; }
-    .kanban-card-file { font-size: 10px; color: var(--text-dim); font-family: monospace; }
+    .kanban-card-text { font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; margin-bottom: 10px; }
 
-    .kanban-action-row {
+    .kanban-card-footer {
       display: flex;
-      gap: 4px;
-      margin-top: 8px;
-      padding-top: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kanban-card-project {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--violet);
+      background: rgba(167,139,250,0.1);
+      border: 1px solid rgba(167,139,250,0.2);
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+    .kanban-card-file { font-size: 10px; color: var(--text-muted); font-family: monospace; }
+
+    .card-actions {
+      display: flex;
+      gap: 5px;
+      margin-top: 10px;
+      padding-top: 10px;
       border-top: 1px solid var(--border);
     }
-    .status-action {
+    .card-action {
       flex: 1;
-      background: var(--surface);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px;
-      font-size: 10px;
+      border-radius: 7px;
+      padding: 5px 8px;
+      font-size: 11px;
       color: var(--text-muted);
       cursor: pointer;
       text-align: center;
       transition: all 0.12s;
+      white-space: nowrap;
     }
-    .status-action:hover { color: var(--text); border-color: var(--indigo); background: var(--indigo-dim); }
-    .status-action.active { color: white; background: var(--indigo); border-color: var(--indigo); pointer-events: none; }
+    .card-action:hover { color: var(--indigo-bright); border-color: var(--border-active); background: var(--indigo-dim); }
+    .card-action.current { color: var(--text-muted); pointer-events: none; opacity: 0.5; }
 
-    /* Project filter */
+    /* Project filter select */
     select {
-      background: var(--elevated);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 7px 12px;
+      border-radius: 9px;
+      padding: 8px 14px;
       font-size: 13px;
       color: var(--text);
       outline: none;
       cursor: pointer;
+      transition: border-color 0.15s;
     }
-    select:focus { border-color: var(--indigo); }
+    select:focus { border-color: var(--border-active); }
 
-    /* ── Inbox page ── */
-    .inbox-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .capture-form {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
+    /* ─── Inbox page ─── */
+    .capture-bar {
       display: flex;
       gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 24px;
+      transition: border-color 0.15s;
     }
+    .capture-bar:focus-within { border-color: var(--border-active); box-shadow: 0 0 0 3px var(--indigo-dim); }
 
     .capture-input {
       flex: 1;
-      background: var(--elevated);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 14px;
+      background: none;
+      border: none;
       font-size: 14px;
       color: var(--text);
       outline: none;
+      letter-spacing: -0.01em;
     }
-    .capture-input:focus { border-color: var(--indigo); }
-    .capture-input::placeholder { color: var(--text-dim); }
+    .capture-input::placeholder { color: var(--text-muted); }
 
-    /* ── Spinner ── */
+    .capture-btn {
+      background: linear-gradient(135deg, var(--indigo), #7c3aed);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .capture-btn:hover { opacity: 0.9; transform: scale(0.98); }
+
+    /* ─── Toast ─── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 11px 20px;
+      border-radius: 12px;
+      opacity: 0;
+      transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+      z-index: 999;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ─── Spinner ─── */
     .spinner {
       display: inline-block;
-      width: 14px;
-      height: 14px;
+      width: 14px; height: 14px;
       border: 2px solid rgba(255,255,255,0.2);
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
+      vertical-align: middle;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Toast ── */
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      background: var(--elevated);
-      border: 1px solid var(--border);
-      color: var(--text);
-      font-size: 13px;
-      padding: 10px 18px;
-      border-radius: 10px;
-      opacity: 0;
-      transition: all 0.2s;
-      pointer-events: none;
-      z-index: 999;
-      white-space: nowrap;
-    }
-    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-    /* ── Refresh btn ── */
-    .refresh-btn {
-      background: var(--elevated);
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      border-radius: 8px;
-      padding: 6px 14px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.12s;
-    }
-    .refresh-btn:hover { color: var(--text); border-color: var(--border-hover); }
-
-    @media (max-width: 700px) {
+    @media (max-width: 720px) {
       .two-col { grid-template-columns: 1fr; }
       .kanban-board { grid-template-columns: 1fr; }
-      .stats-row { grid-template-columns: repeat(3, 1fr); }
-      .tab-nav { gap: 0; }
-      .tab-btn { padding: 6px 10px; font-size: 12px; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      header { padding: 0 16px; }
+      .page { padding: 24px 16px 48px; }
+      .tab-btn { padding: 5px 10px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
 
+<!-- Header -->
 <header>
   <div class="logo">
     <div class="logo-icon">V</div>
     <span class="logo-name">VaultPilot</span>
   </div>
 
-  <nav class="tab-nav" id="main-nav" style="display:none">
-    <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
-    <button class="tab-btn" onclick="switchTab('kanban')">Kanban</button>
-    <button class="tab-btn" onclick="switchTab('inbox')">Inbox</button>
+  <nav id="main-nav" style="display:none">
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('dashboard',this)">Dashboard</button>
+      <button class="tab-btn" onclick="switchTab('kanban',this)">Kanban</button>
+      <button class="tab-btn" onclick="switchTab('inbox',this)">Inbox</button>
+    </div>
   </nav>
 
-  <div id="header-user" style="display:none">
-    <div class="user-pill">
-      <div class="dot"></div>
-      <span id="user-email-label"></span>
-      <button class="logout-btn" onclick="logout()">Uitloggen</button>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="header-user" style="display:none">
+      <div class="user-pill">
+        <div class="live-dot"></div>
+        <span id="user-email-label" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+        <button class="logout-btn" onclick="logout()">Uitloggen</button>
+      </div>
     </div>
   </div>
-  <div id="header-spacer" style="width:80px"></div>
 </header>
 
-<!-- Login -->
+<!-- ═══ Login ═══ -->
 <div id="login-screen">
-  <div class="login-card">
-    <div>
-      <div class="login-title">Web Companion</div>
-      <div class="login-sub">Log in met hetzelfde e-mailadres als in Obsidian om je vault te bekijken en beheren.</div>
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon" style="width:36px;height:36px;font-size:16px;border-radius:10px">V</div>
+      <span style="font-size:18px;font-weight:800;letter-spacing:-0.02em">VaultPilot</span>
     </div>
 
-    <div id="step-email">
-      <div class="field">
-        <label>E-mailadres</label>
-        <input type="email" id="email-input" placeholder="jou@email.com"
-          onkeydown="if(event.key==='Enter')sendOtp()" />
+    <div class="login-card">
+      <!-- Step 1: email -->
+      <div id="step-email">
+        <div class="login-title">Inloggen</div>
+        <div class="login-sub">Gebruik hetzelfde e-mailadres als in je Obsidian vault.</div>
+        <div class="field" style="margin-top:18px">
+          <label>E-mailadres</label>
+          <input type="email" id="email-input" placeholder="jou@email.com"
+            onkeydown="if(event.key==='Enter')sendOtp()" autofocus />
+        </div>
+        <button class="btn btn-primary" onclick="sendOtp()" style="margin-top:16px" id="otp-send-btn">Code sturen</button>
+        <div class="error-msg" id="email-error" style="margin-top:12px;display:none"></div>
       </div>
-      <button class="btn btn-primary" onclick="sendOtp()" style="margin-top:14px" id="otp-btn">Stuur code</button>
-      <div class="error-msg" id="email-error" style="margin-top:8px"></div>
-    </div>
 
-    <div id="step-otp" style="display:none">
-      <div class="login-sub">Voer de 6-cijferige code in die je per e-mail hebt ontvangen.</div>
-      <div class="field" style="margin-top:14px">
-        <label>Verificatiecode</label>
-        <input type="text" id="otp-input" placeholder="123456" maxlength="6"
-          oninput="this.value=this.value.replace(/\D/g,'')"
-          onkeydown="if(event.key==='Enter')verifyOtp()" />
+      <!-- Step 2: OTP -->
+      <div id="step-otp" style="display:none">
+        <div class="login-title">Verificatiecode</div>
+        <div class="login-sub" id="otp-sub">Voer de 6-cijferige code in die je hebt ontvangen.</div>
+
+        <div class="otp-boxes" style="margin-top:18px" id="otp-boxes">
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+        </div>
+
+        <div class="countdown" id="countdown" style="margin-top:10px"></div>
+        <div class="error-msg" id="otp-error" style="margin-top:12px;display:none"></div>
+
+        <button class="btn btn-primary" id="verify-btn" onclick="verifyOtp()" style="margin-top:16px">Inloggen</button>
+        <button class="back-link" onclick="backToEmail()" style="margin-top:12px">
+          Andere code aanvragen of ander e-mailadres gebruiken
+        </button>
       </div>
-      <button class="btn btn-primary" onclick="verifyOtp()" style="margin-top:14px" id="verify-btn">Inloggen</button>
-      <div class="error-msg" id="otp-error" style="margin-top:8px"></div>
-      <button onclick="backToEmail()" style="background:none;border:none;color:var(--text-muted);font-size:12px;margin-top:10px;cursor:pointer;padding:0;text-decoration:underline">
-        Nieuwe code aanvragen
-      </button>
     </div>
   </div>
 </div>
 
-<!-- Dashboard tab -->
+<!-- ═══ Dashboard ═══ -->
 <div class="page" id="page-dashboard">
-  <div style="display:flex;align-items:baseline;justify-content:space-between">
+  <div class="page-header">
     <div>
-      <div class="page-title">Vault Overzicht</div>
-      <div class="page-sub" id="last-sync">—</div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub" id="last-sync">Laden…</div>
     </div>
-    <button class="refresh-btn" onclick="loadAll()">↻ Verversen</button>
+    <button class="icon-btn" onclick="loadAll()">↻ Verversen</button>
   </div>
 
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-bar" style="background:#6366f1"></div>
+  <div class="stats-grid">
+    <div class="stat-card" style="--accent-color:#6366f1">
+      <div class="stat-icon">📁</div>
       <div class="stat-num" id="stat-projects" style="color:#a5b4fc">—</div>
       <div class="stat-label">Projecten</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-bar" style="background:#f87171"></div>
-      <div class="stat-num" id="stat-tasks" style="color:#fca5a5">—</div>
+    <div class="stat-card" style="--accent-color:#fb7185">
+      <div class="stat-icon">✦</div>
+      <div class="stat-num" id="stat-tasks" style="color:#fda4af">—</div>
       <div class="stat-label">Open taken</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-bar" style="background:#fbbf24"></div>
-      <div class="stat-num" id="stat-inbox" style="color:#fde68a">—</div>
+    <div class="stat-card" style="--accent-color:#f59e0b">
+      <div class="stat-icon">📥</div>
+      <div class="stat-num" id="stat-inbox" style="color:#fcd34d">—</div>
       <div class="stat-label">Inbox</div>
     </div>
   </div>
 
   <div class="two-col">
     <div>
-      <div class="section-header">
-        <div class="section-accent" style="background:var(--indigo)"></div>
-        <div class="section-title">Open Taken</div>
-        <div class="section-count" id="dash-tasks-count">0</div>
+      <div class="section-hdr">
+        <div class="section-left">
+          <div class="section-pip" style="background:var(--indigo)"></div>
+          <div class="section-name">Open Taken</div>
+          <div class="section-badge" id="dash-tasks-count">0</div>
+        </div>
       </div>
-      <div id="dash-tasks"><div class="empty-state">Laden…</div></div>
+      <div id="dash-tasks"><div class="empty-state"><span>⏳</span>Laden…</div></div>
     </div>
     <div>
-      <div class="section-header">
-        <div class="section-accent" style="background:var(--amber)"></div>
-        <div class="section-title">Inbox</div>
-        <div class="section-count" id="dash-inbox-count">0</div>
+      <div class="section-hdr">
+        <div class="section-left">
+          <div class="section-pip" style="background:var(--amber)"></div>
+          <div class="section-name">Inbox</div>
+          <div class="section-badge" id="dash-inbox-count">0</div>
+        </div>
       </div>
-      <div id="dash-inbox"><div class="empty-state">Laden…</div></div>
+      <div id="dash-inbox"><div class="empty-state"><span>⏳</span>Laden…</div></div>
     </div>
   </div>
 </div>
 
-<!-- Kanban tab -->
+<!-- ═══ Kanban ═══ -->
 <div class="page" id="page-kanban">
   <div class="kanban-toolbar">
     <div>
       <div class="page-title">Kanban</div>
-      <div class="page-sub">Klik op een kaart om de status te wijzigen</div>
+      <div class="page-sub">Klik op een actie om de status te wijzigen</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <select id="project-filter" onchange="renderKanban()">
         <option value="">Alle projecten</option>
       </select>
-      <button class="refresh-btn" onclick="loadAll()">↻</button>
+      <button class="icon-btn" onclick="loadAll()">↻</button>
     </div>
   </div>
 
   <div class="kanban-board">
-    <!-- Todo -->
     <div class="kanban-col">
-      <div class="kanban-col-header">
+      <div class="kanban-col-hdr">
         <div class="kanban-col-label">
-          <div class="col-dot" style="background:var(--text-dim)"></div>
+          <div class="col-pip" style="background:#475569"></div>
           Todo
         </div>
         <div class="col-count" id="col-todo-count">0</div>
       </div>
-      <div id="col-todo"></div>
+      <div class="kanban-cards" id="col-todo"></div>
     </div>
-
-    <!-- Bezig -->
     <div class="kanban-col">
-      <div class="kanban-col-header">
+      <div class="kanban-col-hdr">
         <div class="kanban-col-label">
-          <div class="col-dot" style="background:var(--blue)"></div>
+          <div class="col-pip" style="background:var(--blue)"></div>
           Bezig
         </div>
         <div class="col-count" id="col-doing-count">0</div>
       </div>
-      <div id="col-doing"></div>
+      <div class="kanban-cards" id="col-doing"></div>
     </div>
-
-    <!-- Klaar -->
     <div class="kanban-col">
-      <div class="kanban-col-header">
+      <div class="kanban-col-hdr">
         <div class="kanban-col-label">
-          <div class="col-dot" style="background:var(--emerald)"></div>
+          <div class="col-pip" style="background:var(--emerald)"></div>
           Klaar
         </div>
         <div class="col-count" id="col-done-count">0</div>
       </div>
-      <div id="col-done"></div>
+      <div class="kanban-cards" id="col-done"></div>
     </div>
   </div>
 </div>
 
-<!-- Inbox tab -->
+<!-- ═══ Inbox ═══ -->
 <div class="page" id="page-inbox">
-  <div class="inbox-toolbar">
+  <div class="page-header">
     <div>
       <div class="page-title">Inbox</div>
-      <div class="page-sub">Items die je hebt vastgelegd via Quick Capture</div>
+      <div class="page-sub">Items vastgelegd via Quick Capture</div>
     </div>
-    <button class="refresh-btn" onclick="loadAll()">↻ Verversen</button>
+    <button class="icon-btn" onclick="loadAll()">↻ Verversen</button>
   </div>
 
-  <div class="capture-form">
+  <div class="capture-bar">
     <input type="text" class="capture-input" id="capture-input"
-      placeholder="Snel iets vastleggen…"
+      placeholder="Snel iets vastleggen en druk Enter…"
       onkeydown="if(event.key==='Enter')addInboxItem()" />
-    <button class="btn-sm btn-indigo" onclick="addInboxItem()">+ Toevoegen</button>
+    <button class="capture-btn" onclick="addInboxItem()">+ Toevoegen</button>
   </div>
 
-  <div class="section-header">
-    <div class="section-accent" style="background:var(--amber)"></div>
-    <div class="section-title">Inbox items</div>
-    <div class="section-count" id="inbox-full-count">0</div>
+  <div class="section-hdr">
+    <div class="section-left">
+      <div class="section-pip" style="background:var(--amber)"></div>
+      <div class="section-name">Items</div>
+      <div class="section-badge" id="inbox-full-count">0</div>
+    </div>
   </div>
-  <div id="inbox-full-list"><div class="empty-state">Laden…</div></div>
+  <div id="inbox-full-list"><div class="empty-state"><span>⏳</span>Laden…</div></div>
 </div>
 
 <div id="toast"></div>
@@ -661,63 +854,151 @@
 <script>
 const SUPABASE_URL = "https://knaydptymtnbeyjwirbx.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuYXlkcHR5bXRuYmV5andpcmJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQzMjUsImV4cCI6MjA5OTU0MDMyNX0.ySQY7BkIbQrr8JpzXh0j0uAWX1erKPZxiIrhq8z_Tvw";
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let currentEmail = "";
 let allTasks = [];
 let allInbox = [];
 let vaultId = null;
-let activeTab = "dashboard";
+let countdownTimer = null;
 
-// ── Auth ──
-function backToEmail() {
-  document.getElementById("step-otp").style.display = "none";
-  document.getElementById("step-email").style.display = "block";
-  document.getElementById("otp-input").value = "";
-  document.getElementById("otp-error").textContent = "";
+// ── OTP digit boxes ──
+function initOtpBoxes() {
+  const boxes = document.querySelectorAll(".otp-digit");
+  boxes.forEach((box, i) => {
+    box.value = "";
+    box.classList.remove("filled");
+
+    box.addEventListener("input", () => {
+      const val = box.value.replace(/\D/g, "");
+      box.value = val.slice(0, 1);
+      box.classList.toggle("filled", box.value !== "");
+      if (box.value && i < 5) boxes[i + 1].focus();
+      if (getOtpValue().length === 6) setTimeout(verifyOtp, 100);
+    });
+
+    box.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !box.value && i > 0) boxes[i - 1].focus();
+      if (e.key === "Enter") verifyOtp();
+    });
+
+    box.addEventListener("paste", (e) => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+      paste.split("").forEach((ch, j) => {
+        if (boxes[j]) { boxes[j].value = ch; boxes[j].classList.add("filled"); }
+      });
+      if (boxes[Math.min(paste.length, 5)]) boxes[Math.min(paste.length, 5)].focus();
+      if (paste.length === 6) setTimeout(verifyOtp, 100);
+    });
+  });
+  boxes[0].focus();
 }
 
+function getOtpValue() {
+  return [...document.querySelectorAll(".otp-digit")].map(b => b.value).join("");
+}
+
+function startCountdown(seconds) {
+  clearInterval(countdownTimer);
+  const el = document.getElementById("countdown");
+  function tick() {
+    if (seconds <= 0) {
+      el.textContent = "Code verlopen — vraag een nieuwe aan.";
+      el.className = "countdown urgent";
+      clearInterval(countdownTimer);
+      return;
+    }
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    el.textContent = `Code geldig nog ${m}:${String(s).padStart(2,"0")}`;
+    el.className = seconds < 60 ? "countdown urgent" : "countdown";
+    seconds--;
+  }
+  tick();
+  countdownTimer = setInterval(tick, 1000);
+}
+
+// ── Auth ──
 async function sendOtp() {
   const email = document.getElementById("email-input").value.trim();
   if (!email) return;
   currentEmail = email;
-  const btn = document.getElementById("otp-btn");
+
+  const btn = document.getElementById("otp-send-btn");
+  const errEl = document.getElementById("email-error");
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>';
-  document.getElementById("email-error").textContent = "";
-  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  btn.innerHTML = '<span class="spinner"></span> Versturen…';
+  errEl.style.display = "none";
+
+  const { error } = await sb.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false }
+  });
+
   btn.disabled = false;
-  btn.textContent = "Stuur code";
+  btn.textContent = "Code sturen";
+
   if (error) {
-    document.getElementById("email-error").textContent = error.message;
+    errEl.textContent = error.message.includes("not found") || error.message.includes("signup")
+      ? "Dit e-mailadres is niet gekoppeld aan een VaultPilot account. Log eerst in via Obsidian."
+      : error.message;
+    errEl.style.display = "block";
     return;
   }
+
   document.getElementById("step-email").style.display = "none";
   document.getElementById("step-otp").style.display = "block";
-  setTimeout(() => document.getElementById("otp-input").focus(), 50);
+  document.getElementById("otp-sub").textContent = `Code verstuurd naar ${email}`;
+  initOtpBoxes();
+  startCountdown(3600);
 }
 
 async function verifyOtp() {
-  const token = document.getElementById("otp-input").value.trim();
+  const token = getOtpValue();
+  if (token.length < 6) return;
+
   const btn = document.getElementById("verify-btn");
+  const errEl = document.getElementById("otp-error");
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span>';
-  document.getElementById("otp-error").textContent = "";
-  const { data, error } = await sb.auth.verifyOtp({ email: currentEmail, token, type: "email" });
+  btn.innerHTML = '<span class="spinner"></span> Verifiëren…';
+  errEl.style.display = "none";
+
+  const { data, error } = await sb.auth.verifyOtp({
+    email: currentEmail,
+    token,
+    type: "email"
+  });
+
   btn.disabled = false;
   btn.textContent = "Inloggen";
+
   if (error || !data.session) {
-    document.getElementById("otp-error").textContent = error?.message ?? "Ongeldige code.";
+    const msg = error?.message ?? "Ongeldige code.";
+    errEl.innerHTML = msg.includes("expired") || msg.includes("invalid")
+      ? `Code verlopen of ongeldig. <strong>Vraag hieronder een nieuwe code aan.</strong>`
+      : msg;
+    errEl.style.display = "block";
+
+    // Reset boxes
+    document.querySelectorAll(".otp-digit").forEach(b => { b.value = ""; b.classList.remove("filled"); });
+    document.querySelectorAll(".otp-digit")[0].focus();
     return;
   }
+
+  clearInterval(countdownTimer);
   await fetchVaultId(data.session.user.id);
   showApp(data.session.user.email);
   loadAll();
 }
 
-async function fetchVaultId(userId) {
-  const { data } = await sb.from("vaults").select("id").eq("user_id", userId).maybeSingle();
-  vaultId = data?.id ?? null;
+function backToEmail() {
+  clearInterval(countdownTimer);
+  document.getElementById("step-otp").style.display = "none";
+  document.getElementById("step-email").style.display = "block";
+  document.getElementById("otp-error").style.display = "none";
+  document.getElementById("email-error").style.display = "none";
+  document.getElementById("email-input").focus();
 }
 
 async function logout() {
@@ -725,25 +1006,28 @@ async function logout() {
   location.reload();
 }
 
+async function fetchVaultId(userId) {
+  const { data } = await sb.from("vaults").select("id").eq("user_id", userId).maybeSingle();
+  vaultId = data?.id ?? null;
+}
+
 // ── Navigation ──
-function switchTab(tab) {
-  activeTab = tab;
+function switchTab(tab, btn) {
   document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  event.currentTarget.classList.add("active");
+  btn.classList.add("active");
   document.getElementById("page-" + tab).classList.add("active");
 }
 
 function showApp(email) {
   document.getElementById("login-screen").style.display = "none";
-  document.getElementById("main-nav").style.display = "flex";
+  document.getElementById("main-nav").style.display = "block";
   document.getElementById("header-user").style.display = "flex";
-  document.getElementById("header-spacer").style.display = "none";
   document.getElementById("user-email-label").textContent = email;
   document.getElementById("page-dashboard").classList.add("active");
 }
 
-// ── Data loading ──
+// ── Data ──
 async function loadAll() {
   const now = new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
   document.getElementById("last-sync").textContent = `Bijgewerkt om ${now}`;
@@ -755,7 +1039,6 @@ async function loadAll() {
 
   allTasks = tasks ?? [];
   allInbox = inbox ?? [];
-
   updateProjectFilter();
   renderDashboard();
   renderKanban();
@@ -773,27 +1056,24 @@ function renderDashboard() {
   document.getElementById("dash-tasks-count").textContent = open.length;
   document.getElementById("dash-inbox-count").textContent = allInbox.length;
 
-  // Taken
   const taskEl = document.getElementById("dash-tasks");
   if (open.length === 0) {
-    taskEl.innerHTML = '<div class="empty-state">Geen open taken — goed bezig! ✓</div>';
+    taskEl.innerHTML = '<div class="empty-state"><span>✅</span>Geen open taken</div>';
   } else {
     taskEl.innerHTML = open.slice(0, 20).map(t => `
       <div class="task-item">
-        <div class="status-dot status-${t.status}" title="Klik om status te wijzigen"
-          onclick="cycleStatus('${t.id}', '${t.status}')"></div>
-        <div class="task-text">${esc(t.text)}</div>
+        <button class="status-btn ${t.status}" title="Wijzig status" onclick="cycleStatus('${t.id}','${t.status}')"></button>
+        <div class="task-text ${t.status === 'done' ? 'done' : ''}">${esc(t.text)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ""}
       </div>
     `).join("");
   }
 
-  // Inbox
   const inboxEl = document.getElementById("dash-inbox");
   if (allInbox.length === 0) {
-    inboxEl.innerHTML = '<div class="empty-state">Inbox is leeg ✓</div>';
+    inboxEl.innerHTML = '<div class="empty-state"><span>✅</span>Inbox leeg</div>';
   } else {
-    inboxEl.innerHTML = allInbox.slice(0, 15).map(item => `
+    inboxEl.innerHTML = allInbox.slice(0, 12).map(item => `
       <div class="inbox-item">
         <div class="inbox-title">${esc(item.title)}</div>
         <div class="inbox-date">${fmtDate(item.created_at)}</div>
@@ -802,7 +1082,7 @@ function renderDashboard() {
   }
 }
 
-// ── Project filter ──
+// ── Kanban ──
 function updateProjectFilter() {
   const sel = document.getElementById("project-filter");
   const current = sel.value;
@@ -811,64 +1091,47 @@ function updateProjectFilter() {
     projects.map(p => `<option value="${esc(p)}" ${p === current ? "selected" : ""}>${esc(p)}</option>`).join("");
 }
 
-// ── Kanban ──
 function renderKanban() {
   const filter = document.getElementById("project-filter").value;
   const tasks = filter ? allTasks.filter(t => t.project === filter) : allTasks;
-
   const cols = { todo: [], doing: [], done: [] };
-  for (const t of tasks) {
-    if (cols[t.status]) cols[t.status].push(t);
-  }
+  for (const t of tasks) if (cols[t.status]) cols[t.status].push(t);
 
-  renderCol("todo", cols.todo);
-  renderCol("doing", cols.doing);
-  renderCol("done", cols.done);
-
-  document.getElementById("col-todo-count").textContent = cols.todo.length;
-  document.getElementById("col-doing-count").textContent = cols.doing.length;
-  document.getElementById("col-done-count").textContent = cols.done.length;
+  ["todo","doing","done"].forEach(s => {
+    document.getElementById("col-" + s + "-count").textContent = cols[s].length;
+    renderCol(s, cols[s]);
+  });
 }
 
 function renderCol(status, tasks) {
   const el = document.getElementById("col-" + status);
   if (tasks.length === 0) {
-    el.innerHTML = '<div class="empty-state" style="padding:16px">Leeg</div>';
+    el.innerHTML = '<div class="empty-state" style="padding:20px 10px;font-size:12px">Leeg</div>';
     return;
   }
-
-  const nextMap = { todo: "doing", doing: "done", done: "todo" };
-  const nextLabel = { todo: "→ Bezig", doing: "→ Klaar", done: "↺ Reset" };
-  const prevMap = { todo: null, doing: "todo", done: "doing" };
-  const prevLabel = { todo: null, doing: "← Todo", done: "← Bezig" };
+  const prev = { todo: null, doing: "todo", done: "doing" };
+  const next = { todo: "doing", doing: "done", done: "todo" };
+  const prevLbl = { doing: "← Todo", done: "← Bezig" };
+  const nextLbl = { todo: "Bezig →", doing: "Klaar →", done: "↺ Reset" };
 
   el.innerHTML = tasks.map(t => `
     <div class="kanban-card">
       <div class="kanban-card-text">${esc(t.text)}</div>
-      <div class="kanban-card-meta">
-        ${t.project ? `<div class="kanban-card-project">${esc(t.project)}</div>` : '<div></div>'}
+      <div class="kanban-card-footer">
+        ${t.project ? `<div class="kanban-card-project">${esc(t.project)}</div>` : "<div></div>"}
         <div class="kanban-card-file">${esc(t.file_path.split("/").pop() ?? "")}</div>
       </div>
-      <div class="kanban-action-row">
-        ${prevMap[status] ? `
-          <button class="status-action" onclick="updateStatus('${t.id}', '${prevMap[status]}')">
-            ${prevLabel[status]}
-          </button>
-        ` : ""}
-        <button class="status-action active">${statusLabel(status)}</button>
-        <button class="status-action" onclick="updateStatus('${t.id}', '${nextMap[status]}')">
-          ${nextLabel[status]}
-        </button>
+      <div class="card-actions">
+        ${prev[status] ? `<button class="card-action" onclick="updateStatus('${t.id}','${prev[status]}')">${prevLbl[status]}</button>` : ""}
+        <button class="card-action current">${statusLabel(status)}</button>
+        <button class="card-action" onclick="updateStatus('${t.id}','${next[status]}')">${nextLbl[status]}</button>
       </div>
     </div>
   `).join("");
 }
 
-function statusLabel(s) {
-  return s === "todo" ? "Todo" : s === "doing" ? "Bezig" : "Klaar";
-}
+function statusLabel(s) { return s === "todo" ? "Todo" : s === "doing" ? "Bezig" : "Klaar"; }
 
-// ── Status update ──
 async function cycleStatus(id, current) {
   const next = current === "todo" ? "doing" : current === "doing" ? "done" : "todo";
   await updateStatus(id, next);
@@ -877,69 +1140,67 @@ async function cycleStatus(id, current) {
 async function updateStatus(id, newStatus) {
   const task = allTasks.find(t => t.id === id);
   if (!task) return;
-
+  const old = task.status;
   task.status = newStatus;
+  renderDashboard();
+  renderKanban();
 
   const { error } = await sb.from("vault_tasks").update({ status: newStatus }).eq("id", id);
   if (error) {
-    toast("Fout bij opslaan — probeer opnieuw");
-    task.status = task.status; // revert in UI not needed, just re-render
+    task.status = old;
+    renderDashboard();
+    renderKanban();
+    toast("❌ Fout bij opslaan");
     return;
   }
-
-  renderDashboard();
-  renderKanban();
-  toast(`Status → ${statusLabel(newStatus)}`);
+  toast(`✓ Status → ${statusLabel(newStatus)}`);
 }
 
-// ── Inbox page ──
+// ── Inbox ──
 function renderInboxPage() {
   document.getElementById("inbox-full-count").textContent = allInbox.length;
   const el = document.getElementById("inbox-full-list");
   if (allInbox.length === 0) {
-    el.innerHTML = '<div class="empty-state">Inbox is leeg ✓</div>';
+    el.innerHTML = '<div class="empty-state"><span>📥</span>Inbox is leeg</div>';
     return;
   }
   el.innerHTML = allInbox.map(item => `
     <div class="inbox-item">
       <div class="inbox-title">${esc(item.title)}</div>
-      <div style="display:flex;align-items:center;gap:12px">
-        <div class="inbox-date">${fmtDate(item.created_at)}</div>
-      </div>
+      <div class="inbox-date">${fmtDate(item.created_at)}</div>
     </div>
   `).join("");
 }
 
-// ── Quick Capture ──
 async function addInboxItem() {
   const input = document.getElementById("capture-input");
   const title = input.value.trim();
-  if (!title || !vaultId) return;
-
+  if (!title || !vaultId) {
+    if (!vaultId) toast("❌ Geen vault gevonden");
+    return;
+  }
   input.value = "";
 
   const row = {
     vault_id: vaultId,
     title,
-    file_path: "inbox/" + title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "") + ".md",
+    file_path: "inbox/" + title.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 60) + ".md",
     created_at: new Date().toISOString(),
   };
 
-  const { error } = await sb.from("inbox_items").insert(row);
-  if (error) {
-    toast("Fout bij toevoegen — " + error.message);
-    return;
-  }
+  const { data, error } = await sb.from("inbox_items").insert(row).select().single();
+  if (error) { toast("❌ " + error.message); return; }
 
-  allInbox.unshift({ ...row, id: crypto.randomUUID() });
+  allInbox.unshift(data);
   renderInboxPage();
   renderDashboard();
-  toast("Toegevoegd aan inbox ✓");
+  toast("✓ Toegevoegd aan inbox");
 }
 
 // ── Helpers ──
 function esc(str) {
-  return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(str ?? "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
 function fmtDate(iso) {
@@ -952,7 +1213,7 @@ function toast(msg) {
   el.textContent = msg;
   el.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
 }
 
 // ── Session restore ──
