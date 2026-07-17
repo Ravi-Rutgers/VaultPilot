@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VaultPilot Web Companion</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f17;
+      --surface: #1a1a28;
+      --elevated: #22223a;
+      --border: rgba(255,255,255,0.07);
+      --indigo: #6366f1;
+      --indigo-dim: rgba(99,102,241,0.15);
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --text-dim: #334155;
+      --rose: #f87171;
+      --amber: #fbbf24;
+      --emerald: #34d399;
+      --violet: #a78bfa;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--indigo);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .logo-name {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 5px;
+    }
+    .logout-btn:hover { color: var(--rose); background: rgba(248,113,113,0.08); }
+
+    main { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+    /* ── Login ── */
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+      gap: 24px;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .login-title { font-size: 20px; font-weight: 600; }
+    .login-sub { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+    input[type="email"], input[type="text"] {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    input:focus { border-color: var(--indigo); }
+
+    .btn {
+      padding: 11px 20px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      width: 100%;
+    }
+
+    .btn-primary { background: var(--indigo); color: white; }
+    .btn-primary:hover { background: #818cf8; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .error-msg { font-size: 12px; color: var(--rose); }
+
+    /* ── Dashboard ── */
+    #dashboard { display: none; }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+
+    .page-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .section-accent { width: 3px; height: 14px; background: var(--indigo); border-radius: 2px; }
+    .section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); font-weight: 600; }
+    .section-count { font-size: 11px; color: var(--text-dim); background: var(--elevated); padding: 1px 7px; border-radius: 10px; }
+
+    /* Stats row */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-bar { width: 24px; height: 2px; border-radius: 1px; margin: 0 auto 10px; }
+    .stat-num { font-size: 28px; font-weight: 700; line-height: 1; }
+    .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+    /* Tasks */
+    .project-block { margin-bottom: 24px; }
+    .project-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--violet);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .task-list { display: flex; flex-direction: column; gap: 4px; }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; shrink-0: true; flex-shrink: 0; }
+    .status-todo { background: var(--text-dim); }
+    .status-doing { background: #60a5fa; }
+    .status-done { background: var(--emerald); opacity: 0.5; }
+
+    .task-text { flex: 1; line-height: 1.4; }
+    .task-text.done { color: var(--text-muted); text-decoration: line-through; }
+
+    .task-file { font-size: 10px; color: var(--text-dim); font-family: monospace; flex-shrink: 0; }
+
+    /* Inbox */
+    .inbox-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+    }
+
+    .inbox-title { font-size: 13px; }
+    .inbox-date { font-size: 11px; color: var(--text-dim); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+    .empty-state { font-size: 13px; color: var(--text-dim); padding: 20px; text-align: center; }
+
+    .refresh-btn {
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .refresh-btn:hover { color: var(--text); border-color: var(--indigo); }
+
+    @media (max-width: 640px) {
+      .two-col { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">V</div>
+    <span class="logo-name">VaultPilot</span>
+  </div>
+  <div id="header-user" style="display:none">
+    <div class="user-pill">
+      <div class="dot"></div>
+      <span id="user-email-label"></span>
+      <button class="logout-btn" onclick="logout()">Uitloggen</button>
+    </div>
+  </div>
+</header>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div>
+      <div class="login-title">Web Companion</div>
+      <div class="login-sub" style="margin-top:6px">Log in met hetzelfde e-mailadres als in Obsidian om je vault te bekijken.</div>
+    </div>
+
+    <!-- Stap 1: e-mail -->
+    <div id="step-email">
+      <div class="field">
+        <label>E-mailadres</label>
+        <input type="email" id="email-input" placeholder="jou@email.com" />
+      </div>
+      <button class="btn btn-primary" onclick="sendOtp()" style="margin-top:14px">Stuur code</button>
+      <div class="error-msg" id="email-error" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Stap 2: OTP -->
+    <div id="step-otp" style="display:none">
+      <div class="login-sub">Voer de 6-cijferige code in die je per e-mail hebt ontvangen.</div>
+      <div class="field" style="margin-top:14px">
+        <label>Verificatiecode</label>
+        <input type="text" id="otp-input" placeholder="123456" maxlength="6"
+          oninput="this.value=this.value.replace(/\D/g,'')"
+          onkeydown="if(event.key==='Enter')verifyOtp()" />
+      </div>
+      <button class="btn btn-primary" onclick="verifyOtp()" style="margin-top:14px">Inloggen</button>
+      <div class="error-msg" id="otp-error" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard">
+  <main>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+      <div class="page-title">Vault Overzicht</div>
+      <button class="refresh-btn" onclick="loadData()">↻ Verversen</button>
+    </div>
+    <div class="page-sub" id="last-sync"></div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-bar" style="background:#6366f1"></div>
+        <div class="stat-num" id="stat-projects" style="color:#a5b4fc">—</div>
+        <div class="stat-label">Projecten</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-bar" style="background:#f87171"></div>
+        <div class="stat-num" id="stat-tasks" style="color:#fca5a5">—</div>
+        <div class="stat-label">Open taken</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-bar" style="background:#fbbf24"></div>
+        <div class="stat-num" id="stat-inbox" style="color:#fde68a">—</div>
+        <div class="stat-label">Inbox</div>
+      </div>
+    </div>
+
+    <!-- Taken + Inbox naast elkaar -->
+    <div class="two-col">
+      <!-- Taken -->
+      <div>
+        <div class="section-header">
+          <div class="section-accent"></div>
+          <div class="section-title">Open Taken</div>
+          <div class="section-count" id="tasks-count">0</div>
+        </div>
+        <div id="tasks-container"><div class="empty-state">Laden…</div></div>
+      </div>
+
+      <!-- Inbox -->
+      <div>
+        <div class="section-header">
+          <div class="section-accent" style="background:#fbbf24"></div>
+          <div class="section-title">Inbox</div>
+          <div class="section-count" id="inbox-count">0</div>
+        </div>
+        <div id="inbox-container"><div class="empty-state">Laden…</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = "https://knaydptymtnbeyjwirbx.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtuYXlkcHR5bXRuYmV5andpcmJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjQzMjUsImV4cCI6MjA5OTU0MDMyNX0.ySQY7BkIbQrr8JpzXh0j0uAWX1erKPZxiIrhq8z_Tvw";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentEmail = "";
+
+async function sendOtp() {
+  const email = document.getElementById("email-input").value.trim();
+  if (!email) return;
+  currentEmail = email;
+  document.getElementById("email-error").textContent = "";
+  const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+  if (error) {
+    document.getElementById("email-error").textContent = error.message;
+    return;
+  }
+  document.getElementById("step-email").style.display = "none";
+  document.getElementById("step-otp").style.display = "block";
+}
+
+async function verifyOtp() {
+  const token = document.getElementById("otp-input").value.trim();
+  document.getElementById("otp-error").textContent = "";
+  const { data, error } = await sb.auth.verifyOtp({ email: currentEmail, token, type: "email" });
+  if (error || !data.session) {
+    document.getElementById("otp-error").textContent = error?.message ?? "Ongeldige code.";
+    return;
+  }
+  showDashboard(data.session.user.email);
+  loadData();
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+function showDashboard(email) {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("header-user").style.display = "flex";
+  document.getElementById("user-email-label").textContent = email;
+}
+
+async function loadData() {
+  const now = new Date().toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("last-sync").textContent = `Bijgewerkt om ${now}`;
+
+  const [{ data: tasks }, { data: inbox }] = await Promise.all([
+    sb.from("vault_tasks").select("*").order("project").order("status"),
+    sb.from("inbox_items").select("*").order("created_at", { ascending: false }),
+  ]);
+
+  renderTasks(tasks ?? []);
+  renderInbox(inbox ?? []);
+}
+
+function renderTasks(tasks) {
+  const open = tasks.filter(t => t.status !== "done");
+  document.getElementById("tasks-count").textContent = open.length;
+  document.getElementById("stat-tasks").textContent = open.length;
+
+  const projects = [...new Set(tasks.map(t => t.project).filter(Boolean))];
+  document.getElementById("stat-projects").textContent = projects.length;
+
+  const container = document.getElementById("tasks-container");
+  if (open.length === 0) {
+    container.innerHTML = '<div class="empty-state">Geen open taken — goed bezig! ✓</div>';
+    return;
+  }
+
+  // Groepeer per project
+  const byProject = {};
+  for (const task of open) {
+    const p = task.project ?? "Overig";
+    if (!byProject[p]) byProject[p] = [];
+    byProject[p].push(task);
+  }
+
+  container.innerHTML = Object.entries(byProject).map(([project, ptasks]) => `
+    <div class="project-block">
+      <div class="project-name">${esc(project)}</div>
+      <div class="task-list">
+        ${ptasks.map(t => `
+          <div class="task-item">
+            <div class="status-dot status-${t.status}"></div>
+            <div class="task-text ${t.status === 'done' ? 'done' : ''}">${esc(t.text)}</div>
+            <div class="task-file">${esc(t.file_path.split("/").pop() ?? "")}</div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderInbox(items) {
+  document.getElementById("inbox-count").textContent = items.length;
+  document.getElementById("stat-inbox").textContent = items.length;
+
+  const container = document.getElementById("inbox-container");
+  if (items.length === 0) {
+    container.innerHTML = '<div class="empty-state">Inbox is leeg ✓</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <div class="inbox-item">
+      <div class="inbox-title">${esc(item.title)}</div>
+      <div class="inbox-date">${new Date(item.created_at).toLocaleDateString("nl-NL")}</div>
+    </div>
+  `).join("");
+}
+
+function esc(str) {
+  return String(str ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// Herstel sessie bij laden
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) {
+    showDashboard(data.session.user.email);
+    loadData();
+  }
+});
+</script>
+</body>
+</html>

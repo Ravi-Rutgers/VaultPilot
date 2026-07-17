@@ -2,6 +2,7 @@ import { Notice, Plugin, TFile, WorkspaceLeaf } from "obsidian";
 import { DEFAULT_SETTINGS, VaultPilotSettings } from "./settings/settings";
 import { getSupabase, signOut } from "./core/supabaseClient";
 import { trackEvent } from "./core/analyticsService";
+import { syncVaultToCloud } from "./core/webCompanion";
 import { LoginModal } from "./views/LoginModal";
 import { BriefingModal } from "./views/BriefingModal";
 import { AiActionsModal } from "./views/AiActionsModal";
@@ -28,6 +29,7 @@ export default class VaultPilotPlugin extends Plugin {
 
   private backgroundAnalyzer: BackgroundAnalyzer | null = null;
   private modifyDebounce = new Map<string, ReturnType<typeof setTimeout>>();
+  private syncDebounce: ReturnType<typeof setTimeout> | null = null;
 
   async onload() {
     await this.loadSettings();
@@ -161,6 +163,7 @@ export default class VaultPilotPlugin extends Plugin {
         trackEvent(this.settings.vaultId, "vault_opened", {
           vault: this.app.vault.getName(),
         });
+        this.triggerCloudSync();
       }
 
       this.registerVaultModifyTracking();
@@ -284,6 +287,8 @@ export default class VaultPilotPlugin extends Plugin {
     this.registerEvent(
       this.app.vault.on("modify", (file: TFile) => {
         if (!this.isLoggedIn) return;
+
+        // Analytics tracking (debounce 30s per bestand)
         const existing = this.modifyDebounce.get(file.path);
         if (existing) clearTimeout(existing);
         const timer = setTimeout(() => {
@@ -291,14 +296,27 @@ export default class VaultPilotPlugin extends Plugin {
           const folder = file.path.includes("/")
             ? file.path.slice(0, file.path.lastIndexOf("/") + 1)
             : "";
-          trackEvent(this.settings.vaultId, "note_modified", {
-            path: file.path,
-            folder,
-          });
+          trackEvent(this.settings.vaultId, "note_modified", { path: file.path, folder });
         }, 30_000);
         this.modifyDebounce.set(file.path, timer);
+
+        // Cloud sync (debounce 60s — wacht tot burst van wijzigingen klaar is)
+        this.triggerCloudSync(60_000);
       })
     );
+  }
+
+  triggerCloudSync(delay = 0) {
+    if (this.syncDebounce) clearTimeout(this.syncDebounce);
+    this.syncDebounce = setTimeout(() => {
+      this.syncDebounce = null;
+      syncVaultToCloud(
+        this.app,
+        this.settings.vaultId,
+        this.settings.projectsFolder,
+        this.settings.inboxFolder
+      );
+    }, delay);
   }
 
   get isLoggedIn(): boolean {
