@@ -223,8 +223,8 @@
       justify-content: center;
     }
     .otp-digit {
-      width: 48px;
-      height: 56px;
+      width: 42px;
+      height: 52px;
       background: var(--elevated);
       border: 1px solid var(--border);
       border-radius: 10px;
@@ -707,6 +707,8 @@
           <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
           <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
           <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
+          <input class="otp-digit" type="text" inputmode="numeric" maxlength="1" />
         </div>
 
         <div class="countdown" id="countdown" style="margin-top:10px"></div>
@@ -873,8 +875,8 @@ function initOtpBoxes() {
       const val = box.value.replace(/\D/g, "");
       box.value = val.slice(0, 1);
       box.classList.toggle("filled", box.value !== "");
-      if (box.value && i < 5) boxes[i + 1].focus();
-      if (getOtpValue().length === 6) setTimeout(verifyOtp, 100);
+      if (box.value && i < 7) boxes[i + 1].focus();
+      if (getOtpValue().length === 8) setTimeout(verifyOtp, 100);
     });
 
     box.addEventListener("keydown", (e) => {
@@ -884,12 +886,12 @@ function initOtpBoxes() {
 
     box.addEventListener("paste", (e) => {
       e.preventDefault();
-      const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+      const paste = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 8);
       paste.split("").forEach((ch, j) => {
         if (boxes[j]) { boxes[j].value = ch; boxes[j].classList.add("filled"); }
       });
-      if (boxes[Math.min(paste.length, 5)]) boxes[Math.min(paste.length, 5)].focus();
-      if (paste.length === 6) setTimeout(verifyOtp, 100);
+      if (boxes[Math.min(paste.length, 7)]) boxes[Math.min(paste.length, 7)].focus();
+      if (paste.length === 8) setTimeout(verifyOtp, 100);
     });
   });
   boxes[0].focus();
@@ -956,7 +958,7 @@ async function sendOtp() {
 
 async function verifyOtp() {
   const token = getOtpValue();
-  if (token.length < 6) return;
+  if (token.length < 8) return;
 
   const btn = document.getElementById("verify-btn");
   const errEl = document.getElementById("otp-error");

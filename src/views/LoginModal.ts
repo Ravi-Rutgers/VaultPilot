@@ -28,7 +28,7 @@ export class LoginModal extends Modal {
     contentEl.empty();
     contentEl.createEl("h2", { text: "VaultPilot — Inloggen" });
     contentEl.createEl("p", {
-      text: "Voer je e-mailadres in. Je ontvangt een 6-cijferige code.",
+      text: "Voer je e-mailadres in. Je ontvangt een 8-cijferige code.",
       cls: "setting-item-description",
     });
 
@@ -71,10 +71,10 @@ export class LoginModal extends Modal {
     });
 
     new Setting(contentEl)
-      .setName("6-cijferige code")
+      .setName("8-cijferige code")
       .addText((text) =>
         text
-          .setPlaceholder("123456")
+          .setPlaceholder("12345678")
           .onChange((v) => (this.code = v.trim()))
           .then((t) => {
             t.inputEl.style.width = "100%";
