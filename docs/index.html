@@ -1548,8 +1548,13 @@ function renderDashboard() {
 // ── Kanban ──
 let activeProject = null;
 
+function resetAddForms() {
+  ["todo","doing","done"].forEach(s => hideAddForm(s));
+}
+
 function showKanbanPicker() {
   activeProject = null;
+  resetAddForms();
   document.getElementById("kanban-picker").style.display = "block";
   document.getElementById("kanban-board-wrap").style.display = "none";
   renderProjectPills();
@@ -1568,6 +1573,7 @@ function renderProjectPills() {
 
 function selectProject(project) {
   activeProject = project;
+  resetAddForms();
   document.getElementById("kanban-picker").style.display = "none";
   document.getElementById("kanban-board-wrap").style.display = "block";
   document.getElementById("kanban-active-project").textContent = project;
