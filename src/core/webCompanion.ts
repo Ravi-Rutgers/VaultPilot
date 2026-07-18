@@ -1,6 +1,6 @@
 import { App } from "obsidian";
 import { getSupabase } from "./supabaseClient";
-import { parseKanbanTasks } from "./kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, KanbanStatus } from "./kanbanParser";
 
 export async function syncVaultToCloud(
   app: App,
@@ -12,11 +12,62 @@ export async function syncVaultToCloud(
   const supabase = getSupabase();
 
   try {
+    // Eerst: webapp-statuswijzigingen terugschrijven naar Obsidian-bestanden
+    await pullStatusChanges(app, supabase, vaultId);
+    // Dan: alle Obsidian-bestanden naar Supabase pushen
     await Promise.all([
       syncTasks(app, supabase, vaultId, projectsFolder),
       syncInbox(app, supabase, vaultId, inboxFolder),
     ]);
   } catch { /* stil falen — nooit de plugin blokkeren */ }
+}
+
+async function pullStatusChanges(
+  app: App,
+  supabase: ReturnType<typeof getSupabase>,
+  vaultId: string
+): Promise<void> {
+  const { data: tasks } = await supabase
+    .from("vault_tasks")
+    .select("file_path, line_number, status")
+    .eq("vault_id", vaultId);
+
+  if (!tasks || tasks.length === 0) return;
+
+  // Groepeer per bestand
+  const byFile: Record<string, { line_number: number; status: string }[]> = {};
+  for (const t of tasks) {
+    if (!byFile[t.file_path]) byFile[t.file_path] = [];
+    byFile[t.file_path].push(t);
+  }
+
+  for (const [filePath, fileTasks] of Object.entries(byFile)) {
+    const file = app.vault.getFileByPath(filePath);
+    if (!file) continue; // bestand bestaat niet in Obsidian (bijv. webapp/tasks.md)
+
+    let content = await app.vault.read(file);
+    let changed = false;
+
+    for (const task of fileTasks) {
+      const lines = content.split("\n");
+      const line = lines[task.line_number];
+      if (!line) continue;
+
+      let fileStatus: string | null = null;
+      if (/^- \[ \]/.test(line)) fileStatus = "todo";
+      else if (/^- \[\/\]/.test(line)) fileStatus = "doing";
+      else if (/^- \[x\]/i.test(line)) fileStatus = "done";
+
+      if (fileStatus && fileStatus !== task.status) {
+        content = updateTaskStatus(content, task.line_number, task.status as KanbanStatus);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      await app.vault.modify(file, content);
+    }
+  }
 }
 
 async function syncTasks(
