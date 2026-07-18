@@ -45,12 +45,75 @@ const TOOLS = [
     description: "Haal een overzicht op van alle projecten met taakaantallen per status.",
     input_schema: { type: "object", properties: {} },
   },
+  {
+    name: "create_note",
+    description: "Maak een nieuwe notitie aan in de vault. Kies de juiste map op basis van de inhoud: inbox/ (ongesorteerd/snel), ideas/ (ideeën), projects/<naam>/ (projectgerelateerd), daily/ (dagelijkse gedachten), research/ (referenties/docs), personal/ (persoonlijk).",
+    input_schema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Titel van de notitie (wordt ook de bestandsnaam)" },
+        content: { type: "string", description: "Inhoud van de notitie in Markdown" },
+        folder: { type: "string", description: "Map waar de notitie opgeslagen wordt, bijv. 'ideas/', 'inbox/', 'projects/VaultPilot/', 'personal/'" },
+        tags: { type: "array", items: { type: "string" }, description: "Optionele tags voor frontmatter" },
+      },
+      required: ["title", "content", "folder"],
+    },
+  },
+  {
+    name: "append_to_note",
+    description: "Voeg inhoud toe aan het einde van een bestaande notitie.",
+    input_schema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "Bestandspad van de notitie in de vault" },
+        content: { type: "string", description: "Toe te voegen inhoud (Markdown)" },
+      },
+      required: ["path", "content"],
+    },
+  },
+  {
+    name: "search_vault",
+    description: "Zoek door alle notities in de vault op trefwoord. Geeft bestandspaden + relevante fragmenten terug.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: { type: "string", description: "Zoekterm" },
+        folder: { type: "string", description: "Beperk zoekactie tot een map (optioneel)" },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "list_notes",
+    description: "Toon een lijst van notities in een map.",
+    input_schema: {
+      type: "object",
+      properties: {
+        folder: { type: "string", description: "Map om te tonen, bijv. 'inbox/', 'ideas/', 'projects/'" },
+      },
+      required: ["folder"],
+    },
+  },
 ];
 
-const SYSTEM_PROMPT = `Je bent VaultPilot AI — een intelligente assistent ingebouwd in Obsidian. Je helpt de gebruiker hun projecten en taken te beheren via hun lokale vault.
+const SYSTEM_PROMPT = `Je bent VaultPilot AI — het brein van de vault van de gebruiker. Je bent ingebouwd in Obsidian en hebt volledige lees- en schrijftoegang tot de vault.
 
-Je beschikt over tools om taken te lezen, aan te maken en bij te werken. Gebruik ze proactief als de gebruiker iets wil doen met zijn taken of projecten.
-Antwoord altijd in het Nederlands. Wees beknopt en direct. Noem bestandspaden alleen als dat relevant is.`;
+Vault-structuur:
+- inbox/     → Dropzone, alles nieuws
+- ideas/     → Ideeën, snelle captures
+- projects/  → Actieve projecten met taken
+- daily/     → Dagelijkse notities
+- research/  → Referenties, docs, rabbit holes
+- personal/  → Persoonlijk, niet-werk
+- archive/   → Afgerond werk
+
+Gedragsregels:
+- Sla informatie die de gebruiker deelt altijd proactief op in de juiste map
+- Gebruik create_note voor nieuwe info, append_to_note om iets toe te voegen aan bestaande notities
+- Gebruik search_vault als de gebruiker iets wil terugvinden
+- Antwoord altijd in het Nederlands
+- Wees beknopt — bevestig wat je hebt opgeslagen, maar houd het kort
+- Noem bestandspaden alleen als dat nuttig is`;
 
 type ApiTextBlock = { type: "text"; text: string };
 type ApiToolUseBlock = { type: "tool_use"; id: string; name: string; input: Record<string, unknown> };
@@ -128,6 +191,10 @@ export class ClaudeService {
       case "create_task": return `Taak aangemaakt: "${input.text}" → ${input.project}`;
       case "update_task": return `Taakstatus bijgewerkt → ${input.new_status}`;
       case "get_vault_summary": return "Vault-overzicht opgehaald";
+      case "create_note": return `Notitie aangemaakt: "${input.title}" in ${input.folder}`;
+      case "append_to_note": return `Toegevoegd aan ${input.path}`;
+      case "search_vault": return `Gezocht op "${input.query}"`;
+      case "list_notes": return `Notities gelezen uit ${input.folder}`;
       default: return name;
     }
   }
@@ -142,6 +209,14 @@ export class ClaudeService {
         return this.updateTask(input.file_path as string, input.line_number as number, input.new_status as KanbanStatus);
       case "get_vault_summary":
         return this.getVaultSummary();
+      case "create_note":
+        return this.createNote(input.title as string, input.content as string, input.folder as string, input.tags as string[] | undefined);
+      case "append_to_note":
+        return this.appendToNote(input.path as string, input.content as string);
+      case "search_vault":
+        return this.searchVault(input.query as string, input.folder as string | undefined);
+      case "list_notes":
+        return this.listNotes(input.folder as string);
       default:
         return `Onbekende tool: ${name}`;
     }
@@ -228,5 +303,71 @@ export class ClaudeService {
       .sort((a, b) => (b[1].todo + b[1].doing) - (a[1].todo + a[1].doing))
       .map(([name, c]) => `${name}: ${c.todo} todo · ${c.doing} bezig · ${c.done} klaar`)
       .join("\n");
+  }
+
+  private async createNote(title: string, content: string, folder: string, tags?: string[]): Promise<string> {
+    const normalized = folder.endsWith("/") ? folder : folder + "/";
+    const slug = title.replace(/[\\/:*?"<>|]/g, "-").trim();
+    const path = normalized + slug + ".md";
+
+    const today = new Date();
+    const dateStr = `${String(today.getDate()).padStart(2, "0")}-${String(today.getMonth() + 1).padStart(2, "0")}-${today.getFullYear()}`;
+    const tagLines = tags?.length ? `tags:\n${tags.map((t) => `  - ${t}`).join("\n")}\n` : "";
+    const frontmatter = `---\ncreated: ${dateStr}\n${tagLines}---\n\n`;
+
+    try { await this.app.vault.createFolder(normalized); } catch { /* bestaat al */ }
+
+    const existing = this.app.vault.getFileByPath(path);
+    if (existing) {
+      const cur = await this.app.vault.read(existing);
+      await this.app.vault.modify(existing, cur + "\n\n" + content);
+      return `Toegevoegd aan bestaande notitie: ${path}`;
+    }
+
+    await this.app.vault.create(path, frontmatter + content);
+    return `Notitie aangemaakt: ${path}`;
+  }
+
+  private async appendToNote(filePath: string, content: string): Promise<string> {
+    const file = this.app.vault.getFileByPath(filePath);
+    if (!file) return `Bestand niet gevonden: ${filePath}`;
+    const cur = await this.app.vault.read(file);
+    await this.app.vault.modify(file, cur.trimEnd() + "\n\n" + content);
+    return `Toegevoegd aan ${filePath}`;
+  }
+
+  private async searchVault(query: string, folder?: string): Promise<string> {
+    const lower = query.toLowerCase();
+    const files = this.app.vault.getMarkdownFiles().filter((f) =>
+      !folder || f.path.startsWith(folder)
+    );
+
+    const hits: string[] = [];
+    for (const file of files) {
+      try {
+        const content = await this.app.vault.read(file);
+        if (!content.toLowerCase().includes(lower)) continue;
+        const lines = content.split("\n");
+        const matching = lines
+          .filter((l) => l.toLowerCase().includes(lower))
+          .slice(0, 3)
+          .map((l) => l.trim());
+        hits.push(`${file.path}:\n  ${matching.join("\n  ")}`);
+        if (hits.length >= 15) break;
+      } catch { /* skip */ }
+    }
+
+    return hits.length === 0 ? `Niets gevonden voor "${query}".` : hits.join("\n\n");
+  }
+
+  private async listNotes(folder: string): Promise<string> {
+    const normalized = folder.endsWith("/") ? folder : folder + "/";
+    const files = this.app.vault.getMarkdownFiles()
+      .filter((f) => f.path.startsWith(normalized))
+      .sort((a, b) => b.stat.mtime - a.stat.mtime)
+      .slice(0, 30);
+
+    if (files.length === 0) return `Geen notities gevonden in ${normalized}`;
+    return files.map((f) => `${f.basename} (${f.path})`).join("\n");
   }
 }
