@@ -649,27 +649,43 @@
     select:focus { border-color: var(--border-active); }
 
     /* ─── Kanban add-form ─── */
-    .kanban-add-btn {
+    .kanban-add-trigger {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      width: 100%;
       background: none;
       border: none;
+      border-top: 1px solid var(--border-subtle);
       color: var(--text-muted);
-      font-size: 16px;
-      line-height: 1;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 9px 14px;
       cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 6px;
+      text-align: left;
       transition: all 0.12s;
+      letter-spacing: -0.01em;
     }
-    .kanban-add-btn:hover { color: var(--indigo-bright); background: var(--indigo-dim); }
+    .kanban-add-trigger:hover { color: var(--indigo-bright); background: var(--indigo-dim); }
+    .kanban-add-trigger .add-icon {
+      font-size: 14px;
+      line-height: 1;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+    .kanban-add-trigger:hover .add-icon { color: var(--indigo-bright); }
 
     .kanban-add-form {
-      margin: 8px 8px 4px;
-      background: var(--card);
+      padding: 8px;
+      border-top: 1px solid var(--border-subtle);
+      animation: fadein 0.12s ease;
+    }
+    .kanban-add-card {
+      background: var(--elevated);
       border: 1px solid var(--border-active);
       border-radius: 10px;
-      padding: 10px;
-      box-shadow: 0 0 0 3px var(--indigo-dim);
-      animation: fadein 0.15s ease;
+      padding: 10px 12px;
+      box-shadow: 0 0 0 2px var(--indigo-dim);
     }
     .kanban-add-textarea {
       width: 100%;
@@ -682,16 +698,15 @@
       letter-spacing: -0.01em;
       outline: none;
       resize: none;
-      min-height: 52px;
+      min-height: 44px;
+      display: block;
     }
-    .kanban-add-textarea::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .kanban-add-textarea::placeholder { color: var(--text-muted); opacity: 0.5; }
     .kanban-add-actions {
       display: flex;
       align-items: center;
       gap: 6px;
       margin-top: 8px;
-      border-top: 1px solid var(--border-subtle);
-      padding-top: 8px;
     }
     .kanban-add-submit {
       background: linear-gradient(135deg, var(--indigo), #7c3aed);
@@ -702,17 +717,18 @@
       padding: 6px 14px;
       border-radius: 7px;
       cursor: pointer;
-      transition: all 0.12s;
+      transition: opacity 0.12s;
     }
-    .kanban-add-submit:hover { opacity: 0.9; }
+    .kanban-add-submit:hover { opacity: 0.88; }
     .kanban-add-cancel {
       background: none;
       border: none;
       color: var(--text-muted);
-      font-size: 12px;
+      font-size: 18px;
+      line-height: 1;
       cursor: pointer;
-      padding: 6px 8px;
-      border-radius: 7px;
+      padding: 4px 7px;
+      border-radius: 6px;
       transition: all 0.12s;
     }
     .kanban-add-cancel:hover { color: var(--text); background: var(--elevated); }
@@ -1003,7 +1019,7 @@
       .status-chip { min-height: 38px; font-size: 12px; border-radius: 8px; }
       .col-count { font-size: 11px; padding: 1px 7px; }
       .kanban-col-hdr { padding: 12px 14px 10px; top: 50px; }
-      .kanban-add-btn { font-size: 18px; padding: 3px 8px; }
+      .kanban-add-trigger { font-size: 13px; padding: 10px 14px; }
       .kanban-col-label { font-size: 11px; gap: 6px; }
       .kanban-project-title { font-size: 17px; }
       .back-to-projects { font-size: 12px; padding: 5px 10px; white-space: nowrap; }
@@ -1193,35 +1209,35 @@
       <div class="kanban-col">
         <div class="kanban-col-hdr">
           <div class="kanban-col-label"><div class="col-pip" style="background:#475569"></div>Todo</div>
-          <div style="display:flex;align-items:center;gap:4px">
-            <div class="col-count" id="col-todo-count">0</div>
-            <button class="kanban-add-btn" onclick="toggleAddForm('todo')" title="Taak toevoegen">+</button>
-          </div>
+          <div class="col-count" id="col-todo-count">0</div>
         </div>
-        <div id="add-form-todo"></div>
         <div class="kanban-cards" id="col-todo"></div>
+        <div id="add-form-todo"></div>
+        <button class="kanban-add-trigger" id="add-trigger-todo" onclick="toggleAddForm('todo')">
+          <span class="add-icon">+</span> Taak toevoegen
+        </button>
       </div>
       <div class="kanban-col">
         <div class="kanban-col-hdr">
           <div class="kanban-col-label"><div class="col-pip" style="background:var(--blue)"></div>Bezig</div>
-          <div style="display:flex;align-items:center;gap:4px">
-            <div class="col-count" id="col-doing-count">0</div>
-            <button class="kanban-add-btn" onclick="toggleAddForm('doing')" title="Taak toevoegen">+</button>
-          </div>
+          <div class="col-count" id="col-doing-count">0</div>
         </div>
-        <div id="add-form-doing"></div>
         <div class="kanban-cards" id="col-doing"></div>
+        <div id="add-form-doing"></div>
+        <button class="kanban-add-trigger" id="add-trigger-doing" onclick="toggleAddForm('doing')">
+          <span class="add-icon">+</span> Taak toevoegen
+        </button>
       </div>
       <div class="kanban-col">
         <div class="kanban-col-hdr">
           <div class="kanban-col-label"><div class="col-pip" style="background:var(--emerald)"></div>Klaar</div>
-          <div style="display:flex;align-items:center;gap:4px">
-            <div class="col-count" id="col-done-count">0</div>
-            <button class="kanban-add-btn" onclick="toggleAddForm('done')" title="Taak toevoegen">+</button>
-          </div>
+          <div class="col-count" id="col-done-count">0</div>
         </div>
-        <div id="add-form-done"></div>
         <div class="kanban-cards" id="col-done"></div>
+        <div id="add-form-done"></div>
+        <button class="kanban-add-trigger" id="add-trigger-done" onclick="toggleAddForm('done')">
+          <span class="add-icon">+</span> Taak toevoegen
+        </button>
       </div>
     </div>
   </div>
@@ -1625,15 +1641,18 @@ function toggleAddForm(status) {
   if (activeAddForm) hideAddForm(activeAddForm);
   activeAddForm = status;
 
+  document.getElementById("add-trigger-" + status).style.display = "none";
   const container = document.getElementById("add-form-" + status);
   container.innerHTML = `
     <div class="kanban-add-form">
-      <textarea class="kanban-add-textarea" id="add-textarea-${status}"
-        placeholder="Taakomschrijving… (optioneel #hoog/#kritiek)"
-        onkeydown="handleAddKey(event,'${status}')"></textarea>
-      <div class="kanban-add-actions">
-        <button class="kanban-add-submit" onclick="submitAddTask('${status}')">Toevoegen</button>
-        <button class="kanban-add-cancel" onclick="hideAddForm('${status}')">Annuleren</button>
+      <div class="kanban-add-card">
+        <textarea class="kanban-add-textarea" id="add-textarea-${status}"
+          placeholder="Taakomschrijving…"
+          onkeydown="handleAddKey(event,'${status}')"></textarea>
+        <div class="kanban-add-actions">
+          <button class="kanban-add-submit" onclick="submitAddTask('${status}')">Toevoegen</button>
+          <button class="kanban-add-cancel" onclick="hideAddForm('${status}')">✕</button>
+        </div>
       </div>
     </div>
   `;
@@ -1642,6 +1661,8 @@ function toggleAddForm(status) {
 
 function hideAddForm(status) {
   document.getElementById("add-form-" + status).innerHTML = "";
+  const trigger = document.getElementById("add-trigger-" + status);
+  if (trigger) trigger.style.display = "";
   if (activeAddForm === status) activeAddForm = null;
 }
 
@@ -1653,7 +1674,7 @@ function handleAddKey(e, status) {
 async function submitAddTask(status) {
   const textarea = document.getElementById("add-textarea-" + status);
   const text = textarea?.value.trim();
-  if (!text) { toast("⚠️ Vul een taakomschrijving in"); textarea?.focus(); return; }
+  if (!text) { textarea?.focus(); return; }
   if (!vaultId) { toast("❌ Geen vault gevonden"); return; }
 
   const btn = document.querySelector(`#add-form-${status} .kanban-add-submit`);
