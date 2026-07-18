@@ -648,6 +648,75 @@
     }
     select:focus { border-color: var(--border-active); }
 
+    /* ─── Kanban add-form ─── */
+    .kanban-add-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 6px;
+      transition: all 0.12s;
+    }
+    .kanban-add-btn:hover { color: var(--indigo-bright); background: var(--indigo-dim); }
+
+    .kanban-add-form {
+      margin: 8px 8px 4px;
+      background: var(--card);
+      border: 1px solid var(--border-active);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 0 0 3px var(--indigo-dim);
+      animation: fadein 0.15s ease;
+    }
+    .kanban-add-textarea {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      line-height: 1.5;
+      letter-spacing: -0.01em;
+      outline: none;
+      resize: none;
+      min-height: 52px;
+    }
+    .kanban-add-textarea::placeholder { color: var(--text-muted); opacity: 0.6; }
+    .kanban-add-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 8px;
+    }
+    .kanban-add-submit {
+      background: linear-gradient(135deg, var(--indigo), #7c3aed);
+      border: none;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .kanban-add-submit:hover { opacity: 0.9; }
+    .kanban-add-cancel {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 7px;
+      transition: all 0.12s;
+    }
+    .kanban-add-cancel:hover { color: var(--text); background: var(--elevated); }
+
     /* ─── Inbox page ─── */
     .capture-bar {
       display: flex;
@@ -934,6 +1003,7 @@
       .status-chip { min-height: 38px; font-size: 12px; border-radius: 8px; }
       .col-count { font-size: 11px; padding: 1px 7px; }
       .kanban-col-hdr { padding: 12px 14px 10px; top: 50px; }
+      .kanban-add-btn { font-size: 18px; padding: 3px 8px; }
       .kanban-col-label { font-size: 11px; gap: 6px; }
       .kanban-project-title { font-size: 17px; }
       .back-to-projects { font-size: 12px; padding: 5px 10px; white-space: nowrap; }
@@ -1123,22 +1193,34 @@
       <div class="kanban-col">
         <div class="kanban-col-hdr">
           <div class="kanban-col-label"><div class="col-pip" style="background:#475569"></div>Todo</div>
-          <div class="col-count" id="col-todo-count">0</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <div class="col-count" id="col-todo-count">0</div>
+            <button class="kanban-add-btn" onclick="toggleAddForm('todo')" title="Taak toevoegen">+</button>
+          </div>
         </div>
+        <div id="add-form-todo"></div>
         <div class="kanban-cards" id="col-todo"></div>
       </div>
       <div class="kanban-col">
         <div class="kanban-col-hdr">
           <div class="kanban-col-label"><div class="col-pip" style="background:var(--blue)"></div>Bezig</div>
-          <div class="col-count" id="col-doing-count">0</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <div class="col-count" id="col-doing-count">0</div>
+            <button class="kanban-add-btn" onclick="toggleAddForm('doing')" title="Taak toevoegen">+</button>
+          </div>
         </div>
+        <div id="add-form-doing"></div>
         <div class="kanban-cards" id="col-doing"></div>
       </div>
       <div class="kanban-col">
         <div class="kanban-col-hdr">
           <div class="kanban-col-label"><div class="col-pip" style="background:var(--emerald)"></div>Klaar</div>
-          <div class="col-count" id="col-done-count">0</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <div class="col-count" id="col-done-count">0</div>
+            <button class="kanban-add-btn" onclick="toggleAddForm('done')" title="Taak toevoegen">+</button>
+          </div>
         </div>
+        <div id="add-form-done"></div>
         <div class="kanban-cards" id="col-done"></div>
       </div>
     </div>
@@ -1530,6 +1612,75 @@ function renderCol(status, tasks) {
       </div>
     </div>`;
   }).join("");
+}
+
+// ── Taak toevoegen (kanban) ──
+let activeAddForm = null;
+
+function toggleAddForm(status) {
+  if (activeAddForm === status) {
+    hideAddForm(status);
+    return;
+  }
+  if (activeAddForm) hideAddForm(activeAddForm);
+  activeAddForm = status;
+
+  const container = document.getElementById("add-form-" + status);
+  container.innerHTML = `
+    <div class="kanban-add-form">
+      <textarea class="kanban-add-textarea" id="add-textarea-${status}"
+        placeholder="Taakomschrijving… (optioneel #hoog/#kritiek)"
+        onkeydown="handleAddKey(event,'${status}')"></textarea>
+      <div class="kanban-add-actions">
+        <button class="kanban-add-submit" onclick="submitAddTask('${status}')">Toevoegen</button>
+        <button class="kanban-add-cancel" onclick="hideAddForm('${status}')">Annuleren</button>
+      </div>
+    </div>
+  `;
+  setTimeout(() => document.getElementById("add-textarea-" + status)?.focus(), 40);
+}
+
+function hideAddForm(status) {
+  document.getElementById("add-form-" + status).innerHTML = "";
+  if (activeAddForm === status) activeAddForm = null;
+}
+
+function handleAddKey(e, status) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submitAddTask(status); }
+  if (e.key === "Escape") hideAddForm(status);
+}
+
+async function submitAddTask(status) {
+  const textarea = document.getElementById("add-textarea-" + status);
+  const text = textarea?.value.trim();
+  if (!text) { toast("⚠️ Vul een taakomschrijving in"); textarea?.focus(); return; }
+  if (!vaultId) { toast("❌ Geen vault gevonden"); return; }
+
+  const btn = document.querySelector(`#add-form-${status} .kanban-add-submit`);
+  if (btn) { btn.disabled = true; btn.textContent = "…"; }
+
+  const row = {
+    vault_id: vaultId,
+    file_path: "webapp/tasks.md",
+    line_number: 0,
+    text,
+    status,
+    project: activeProject,
+    priority: null,
+  };
+
+  const { data, error } = await sb.from("vault_tasks").insert(row).select().single();
+  if (error) {
+    if (btn) { btn.disabled = false; btn.textContent = "Toevoegen"; }
+    toast("❌ " + error.message);
+    return;
+  }
+
+  allTasks.push(data);
+  hideAddForm(status);
+  renderDashboard();
+  renderKanban();
+  toast("✓ Taak toegevoegd");
 }
 
 function statusLabel(s) { return s === "todo" ? "Todo" : s === "doing" ? "Bezig" : "Klaar"; }
