@@ -1683,7 +1683,6 @@ async function submitAddTask(status) {
     text,
     status,
     project: activeProject,
-    priority: null,
   };
 
   const { data, error } = await sb.from("vault_tasks").insert(row).select().single();
