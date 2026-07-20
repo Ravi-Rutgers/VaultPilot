@@ -45,17 +45,31 @@ export function nextStatus(current: KanbanStatus): KanbanStatus {
   return "todo";
 }
 
+export type PriorityLabel = "kritiek" | "hoog" | "midden" | "laag";
+
 export interface LabelResult {
-  label: "hoog" | "midden" | "laag" | null;
+  label: PriorityLabel | null;
   cleanText: string;
 }
 
 export function extractLabel(text: string): LabelResult {
-  const match = text.match(/#(hoog|midden|laag)\b/i);
+  const match = text.match(/#(kritiek|hoog|midden|laag)\b/i);
   if (!match) return { label: null, cleanText: text };
-  const label = match[1].toLowerCase() as "hoog" | "midden" | "laag";
+  const label = match[1].toLowerCase() as PriorityLabel;
   const cleanText = text.replace(match[0], "").replace(/\s{2,}/g, " ").trim();
   return { label, cleanText };
+}
+
+const PRIORITY_ORDER: Record<PriorityLabel, number> = {
+  kritiek: 1,
+  hoog: 2,
+  midden: 3,
+  laag: 4,
+};
+
+export function priorityOrder(label: PriorityLabel | null): number {
+  if (!label) return 5;
+  return PRIORITY_ORDER[label];
 }
 
 export interface DueDateResult {

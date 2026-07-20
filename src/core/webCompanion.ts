@@ -1,25 +1,45 @@
 import { App } from "obsidian";
 import { getSupabase } from "./supabaseClient";
-import { parseKanbanTasks, updateTaskStatus, KanbanStatus } from "./kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, KanbanStatus, extractLabel } from "./kanbanParser";
 
 export async function syncVaultToCloud(
   app: App,
   vaultId: string,
   projectsFolder: string,
-  inboxFolder: string
+  inboxFolder: string,
+  accessToken: string,
+  refreshToken: string,
+  onTokenRefresh?: (newAccess: string, newRefresh: string) => void
 ): Promise<void> {
-  if (!vaultId) return;
+  if (!vaultId || !accessToken || !refreshToken) return;
   const supabase = getSupabase();
 
   try {
-    // Eerst: webapp-statuswijzigingen terugschrijven naar Obsidian-bestanden
+    // Zet sessie opnieuw voor elke sync — access token kan verlopen zijn
+    const { data, error: sessionError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    if (sessionError || !data.session) {
+      console.error("[VaultPilot] sessie mislukt:", sessionError?.message ?? "geen sessie");
+      return;
+    }
+
+    // Sla vernieuwde tokens op als ze veranderd zijn
+    if (data.session.access_token !== accessToken && onTokenRefresh) {
+      onTokenRefresh(data.session.access_token, data.session.refresh_token ?? refreshToken);
+    }
+
     await pullStatusChanges(app, supabase, vaultId);
-    // Dan: alle Obsidian-bestanden naar Supabase pushen
     await Promise.all([
       syncTasks(app, supabase, vaultId, projectsFolder),
       syncInbox(app, supabase, vaultId, inboxFolder),
     ]);
-  } catch { /* stil falen — nooit de plugin blokkeren */ }
+    console.log("[VaultPilot] sync complete");
+  } catch (e) {
+    console.error("[VaultPilot] sync error:", e);
+  }
 }
 
 async function pullStatusChanges(
@@ -42,31 +62,33 @@ async function pullStatusChanges(
   }
 
   for (const [filePath, fileTasks] of Object.entries(byFile)) {
-    const file = app.vault.getFileByPath(filePath);
-    if (!file) continue; // bestand bestaat niet in Obsidian (bijv. webapp/tasks.md)
+    try {
+      const file = app.vault.getFileByPath(filePath);
+      if (!file) continue; // bestand bestaat niet in Obsidian (bijv. webapp/tasks.md)
 
-    let content = await app.vault.read(file);
-    let changed = false;
+      let content = await app.vault.read(file);
+      let changed = false;
 
-    for (const task of fileTasks) {
-      const lines = content.split("\n");
-      const line = lines[task.line_number];
-      if (!line) continue;
+      for (const task of fileTasks) {
+        const lines = content.split("\n");
+        const line = lines[task.line_number];
+        if (!line) continue;
 
-      let fileStatus: string | null = null;
-      if (/^- \[ \]/.test(line)) fileStatus = "todo";
-      else if (/^- \[\/\]/.test(line)) fileStatus = "doing";
-      else if (/^- \[x\]/i.test(line)) fileStatus = "done";
+        let fileStatus: string | null = null;
+        if (/^- \[ \]/.test(line)) fileStatus = "todo";
+        else if (/^- \[\/\]/.test(line)) fileStatus = "doing";
+        else if (/^- \[x\]/i.test(line)) fileStatus = "done";
 
-      if (fileStatus && fileStatus !== task.status) {
-        content = updateTaskStatus(content, task.line_number, task.status as KanbanStatus);
-        changed = true;
+        if (fileStatus && fileStatus !== task.status) {
+          content = updateTaskStatus(content, task.line_number, task.status as KanbanStatus);
+          changed = true;
+        }
       }
-    }
 
-    if (changed) {
-      await app.vault.modify(file, content);
-    }
+      if (changed) {
+        await app.vault.modify(file, content);
+      }
+    } catch { /* bestand niet leesbaar — overslaan */ }
   }
 }
 
@@ -87,6 +109,7 @@ async function syncTasks(
     text: string;
     status: string;
     project: string | null;
+    priority: string | null;
   }[] = [];
 
   for (const file of allFiles) {
@@ -96,6 +119,7 @@ async function syncTasks(
       const project = file.path.slice(projectsFolder.length).split("/")[0] ?? null;
 
       for (const task of tasks) {
+        const { label } = extractLabel(task.text);
         rows.push({
           vault_id: vaultId,
           file_path: file.path,
@@ -103,10 +127,13 @@ async function syncTasks(
           text: task.text,
           status: task.status,
           project,
+          priority: label,
         });
       }
     } catch { /* bestand niet leesbaar */ }
   }
+
+  console.log(`[VaultPilot] syncTasks: ${allFiles.length} files, ${rows.length} rows`);
 
   if (rows.length === 0) {
     // Verwijder oude taken als vault leeg is
@@ -115,9 +142,10 @@ async function syncTasks(
   }
 
   // Upsert alle taken (unieke combinatie vault_id + file_path + line_number)
-  await supabase.from("vault_tasks").upsert(rows, {
+  const { error: upsertError } = await supabase.from("vault_tasks").upsert(rows, {
     onConflict: "vault_id,file_path,line_number",
   });
+  console.log("[VaultPilot] upsert result:", upsertError ? upsertError.message : "OK");
 
   // Verwijder taken die niet meer in de vault staan
   const knownPaths = [...new Set(rows.map((r) => r.file_path))];

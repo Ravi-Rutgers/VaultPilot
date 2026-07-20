@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { KanbanTask, extractLabel, extractDueDate } from "../core/kanbanParser";
 
 const LABEL_STYLES: Record<string, string> = {
+  kritiek: "bg-red-500/25 text-red-400 ring-1 ring-red-500/50",
   hoog: "bg-rose-500/20 text-rose-400",
   midden: "bg-amber-500/20 text-amber-400",
   laag: "bg-gray-700 text-gray-500",
@@ -85,7 +86,13 @@ export function KanbanCard({ task, projectColor, showProject, isDragging, onDrag
             </span>
           )}
           {label && (
-            <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${LABEL_STYLES[label]}`}>
+            <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-medium ${LABEL_STYLES[label]}`}>
+              {label === "kritiek" && (
+                <span className="relative flex h-1.5 w-1.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                </span>
+              )}
               {label}
             </span>
           )}

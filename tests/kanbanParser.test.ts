@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { TFile } from "obsidian";
-import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel, appendTaskToContent, loadTasksFromFolder, deleteTask } from "../src/core/kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, nextStatus, extractLabel, priorityOrder, appendTaskToContent, loadTasksFromFolder, deleteTask } from "../src/core/kanbanParser";
 
 const mockFile = { path: "projects/Test/Test.md", basename: "Test" } as TFile;
 
@@ -107,6 +107,30 @@ describe("extractLabel", () => {
     expect(result.label).toBe("hoog");
     expect(result.cleanText).toBe("Fix dit #midden probleem");
   });
+
+  it("herkent #kritiek", () => {
+    expect(extractLabel("Productie is down #kritiek")).toEqual({ label: "kritiek", cleanText: "Productie is down" });
+  });
+
+  it("#kritiek aan het begin", () => {
+    const result = extractLabel("#kritiek Fix dit nu");
+    expect(result.label).toBe("kritiek");
+    expect(result.cleanText).toBe("Fix dit nu");
+  });
+
+  it("#kritiek wint van #hoog als het eerste staat", () => {
+    const result = extractLabel("Fix #kritiek dit #hoog probleem");
+    expect(result.label).toBe("kritiek");
+    expect(result.cleanText).toBe("Fix dit #hoog probleem");
+  });
+});
+
+describe("priorityOrder", () => {
+  it("kritiek heeft volgorde 1", () => expect(priorityOrder("kritiek")).toBe(1));
+  it("hoog heeft volgorde 2", () => expect(priorityOrder("hoog")).toBe(2));
+  it("midden heeft volgorde 3", () => expect(priorityOrder("midden")).toBe(3));
+  it("laag heeft volgorde 4", () => expect(priorityOrder("laag")).toBe(4));
+  it("null (geen label) heeft volgorde 5", () => expect(priorityOrder(null)).toBe(5));
 });
 
 describe("appendTaskToContent", () => {

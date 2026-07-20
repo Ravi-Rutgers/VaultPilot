@@ -11,6 +11,8 @@ import {
   updateTaskText,
   appendTaskToContent,
   deleteTask,
+  extractLabel,
+  priorityOrder,
 } from "../core/kanbanParser";
 import { KanbanColumn } from "./KanbanColumn";
 import { KanbanCardModal } from "./KanbanCardModal";
@@ -132,7 +134,10 @@ export function KanbanPanel({ app, settings }: Props) {
   projects.forEach((p, i) => { projectColorMap[p.name] = PROJECT_COLORS[i % PROJECT_COLORS.length]; });
 
   const draggedId = draggedTask ? `${draggedTask.file.path}-${draggedTask.lineNumber}` : null;
-  const columnTasks = (status: KanbanStatus) => tasks.filter((t) => t.status === status);
+  const columnTasks = (status: KanbanStatus) =>
+    tasks
+      .filter((t) => t.status === status)
+      .sort((a, b) => priorityOrder(extractLabel(a.text).label) - priorityOrder(extractLabel(b.text).label));
   const selectedLabel = selectedKey === ALL_KEY ? "Alle projecten" : (projects.find((p) => p.path === selectedKey)?.name ?? "");
 
   return (

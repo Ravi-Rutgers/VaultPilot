@@ -8,6 +8,7 @@ import {
   getRecentFiles,
 } from "../core/scanner";
 import { parseOpenTasks } from "../core/taskParser";
+import { KanbanTask, loadTasksFromFolder, extractLabel, priorityOrder } from "../core/kanbanParser";
 import { Suggestion } from "../core/fastConnect";
 import { FastConnectPanel } from "./FastConnectPanel";
 import { fetchAnalyticsStats, fetchWeeklyActivity, AnalyticsStats, DayActivity } from "../core/analyticsService";
@@ -251,6 +252,9 @@ export function DashboardPanel({
       {/* Analytics block */}
       {isLoggedIn && vaultId && <AnalyticsBlock vaultId={vaultId} />}
 
+      {/* Top Prioriteiten */}
+      <TopPrioriteitenSection app={app} projectsFolder={settings.projectsFolder} />
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2">
         <StatCard label="Projecten" value={data.activeProjects.length} accent="indigo"
@@ -446,6 +450,68 @@ function FileRow({ label, sub, onClick }: { label: string; sub?: string; onClick
 function EmptyState({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-3 py-4 text-center text-xs text-gray-600">{children}</div>
+  );
+}
+
+const PRIORITY_BADGE: Record<string, string> = {
+  kritiek: "bg-red-500/20 text-red-400 ring-1 ring-red-500/40",
+  hoog: "bg-rose-500/20 text-rose-400",
+};
+
+function TopPrioriteitenSection({ app, projectsFolder }: { app: App; projectsFolder: string }) {
+  const [tasks, setTasks] = useState<KanbanTask[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const all = await loadTasksFromFolder(app, projectsFolder);
+      const highPrio = all
+        .filter((t) => t.status !== "done")
+        .filter((t) => {
+          const { label } = extractLabel(t.text);
+          return label === "kritiek" || label === "hoog";
+        })
+        .sort((a, b) => priorityOrder(extractLabel(a.text).label) - priorityOrder(extractLabel(b.text).label))
+        .slice(0, 5);
+      if (!cancelled) setTasks(highPrio);
+    };
+    load();
+    const ref = app.vault.on("modify", load);
+    return () => { cancelled = true; app.vault.offref(ref); };
+  }, [app, projectsFolder]);
+
+  if (tasks.length === 0) return null;
+
+  return (
+    <Section title="Top Prioriteiten">
+      {tasks.map((t) => {
+        const { label, cleanText } = extractLabel(t.text);
+        const project = t.file.path.slice(projectsFolder.length).split("/")[0] ?? "";
+        return (
+          <div
+            key={`${t.file.path}-${t.lineNumber}`}
+            className="px-3 py-2 border-b border-gray-800 last:border-0 cursor-pointer hover:bg-gray-800 transition-colors"
+            onClick={() => app.workspace.openLinkText(t.file.basename, "", false)}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-gray-200 truncate leading-snug">{cleanText}</span>
+              {label && (
+                <span className={`shrink-0 text-[9px] px-1.5 py-0.5 rounded font-medium flex items-center gap-1 ${PRIORITY_BADGE[label]}`}>
+                  {label === "kritiek" && (
+                    <span className="relative flex h-1.5 w-1.5 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+                    </span>
+                  )}
+                  {label}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-gray-600">{project}</span>
+          </div>
+        );
+      })}
+    </Section>
   );
 }
 
