@@ -165,14 +165,6 @@ export default class VaultPilotPlugin extends Plugin {
     );
 
     this.app.workspace.onLayoutReady(async () => {
-      // Herstel Supabase sessie als er een opgeslagen token is
-      if (this.settings.accessToken && this.settings.refreshToken) {
-        await getSupabase().auth.setSession({
-          access_token: this.settings.accessToken,
-          refresh_token: this.settings.refreshToken,
-        });
-      }
-
       if (this.isLoggedIn) {
         trackEvent(this.settings.vaultId, "vault_opened", {
           vault: this.app.vault.getName(),
@@ -328,7 +320,14 @@ export default class VaultPilotPlugin extends Plugin {
         this.app,
         this.settings.vaultId,
         this.settings.projectsFolder,
-        this.settings.inboxFolder
+        this.settings.inboxFolder,
+        this.settings.accessToken,
+        this.settings.refreshToken,
+        async (newAccess, newRefresh) => {
+          this.settings.accessToken = newAccess;
+          this.settings.refreshToken = newRefresh;
+          await this.saveSettings();
+        }
       );
     }, delay);
   }

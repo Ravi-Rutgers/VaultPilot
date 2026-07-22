@@ -7,8 +7,12 @@
     "dev": "concurrently \"tailwindcss -i styles/main.css -o styles/output.css --watch\" \"node esbuild.config.mjs\"",
     "build": "npm run build:css && node esbuild.config.mjs production",
     "build:css": "tailwindcss -i styles/main.css -o styles/output.css --minify",
+    "deploy": "npm run build && node -e \"const fs=require('fs'); const d='C:/Users/ravir/Documents/Hussle/Brein/.obsidian/plugins/vaultpilot'; fs.copyFileSync('main.js',d+'/main.js'); fs.copyFileSync('styles/output.css',d+'/styles.css'); fs.copyFileSync('manifest.json',d+'/manifest.json'); console.log('Deployed to Brein vault');\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:browser": "playwright test",
+    "test:browser:ui": "playwright test --ui",
+    "test:browser:headed": "playwright test --headed"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +26,7 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/cytoscape": "^3.21.9",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
@@ -30,6 +35,7 @@
     "builtin-modules": "^5.3.0",
     "concurrently": "^10.0.3",
     "esbuild": "^0.28.1",
+    "playwright": "^1.61.1",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.8.3",
     "vitest": "^4.1.10"

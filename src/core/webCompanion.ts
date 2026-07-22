@@ -1,6 +1,6 @@
 import { App } from "obsidian";
 import { getSupabase } from "./supabaseClient";
-import { parseKanbanTasks, updateTaskStatus, KanbanStatus, extractLabel } from "./kanbanParser";
+import { parseKanbanTasks, updateTaskStatus, appendTaskToContent, KanbanStatus, extractLabel } from "./kanbanParser";
 
 export async function syncVaultToCloud(
   app: App,
@@ -178,4 +178,92 @@ async function syncInbox(
   if (rows.length > 0) {
     await supabase.from("inbox_items").insert(rows);
   }
+}
+
+/**
+ * Haalt taken op uit Supabase die via de webapp zijn aangemaakt (file_path = 'webapp/tasks.md')
+ * en schrijft ze naar het juiste projectbestand in Obsidian.
+ * Geeft het aantal gesynchroniseerde taken terug.
+ */
+export async function syncFromCloud(
+  app: App,
+  vaultId: string,
+  projectsFolder: string,
+  accessToken: string,
+  refreshToken: string,
+  onTokenRefresh?: (newAccess: string, newRefresh: string) => void
+): Promise<number> {
+  if (!vaultId || !accessToken || !refreshToken) return 0;
+  const supabase = getSupabase();
+
+  const { data, error: sessionError } = await supabase.auth.setSession({
+    access_token: accessToken,
+    refresh_token: refreshToken,
+  });
+
+  if (sessionError || !data.session) {
+    console.error("[VaultPilot] syncFromCloud: sessie mislukt");
+    return 0;
+  }
+
+  if (data.session.access_token !== accessToken && onTokenRefresh) {
+    onTokenRefresh(data.session.access_token, data.session.refresh_token ?? refreshToken);
+  }
+
+  // Haal webapp-taken op — alleen taken waarvan het bestand niet in Obsidian bestaat
+  const { data: webTasks, error } = await supabase
+    .from("vault_tasks")
+    .select("id, file_path, text, status, project, priority")
+    .eq("vault_id", vaultId);
+
+  if (error || !webTasks || webTasks.length === 0) return 0;
+
+  // Filter: taken waarvan het bestand niet in Obsidian staat (webapp-only taken)
+  const vaultPaths = new Set(app.vault.getMarkdownFiles().map((f) => f.path));
+  const webOnlyTasks = webTasks.filter((t) => !vaultPaths.has(t.file_path));
+
+  if (webOnlyTasks.length === 0) return 0;
+
+  // Groepeer per project
+  const byProject = new Map<string, typeof webOnlyTasks>();
+  for (const task of webOnlyTasks) {
+    const projectName = task.project ?? "inbox";
+    if (!byProject.has(projectName)) byProject.set(projectName, []);
+    byProject.get(projectName)!.push(task);
+  }
+
+  let synced = 0;
+  const syncedIds: string[] = [];
+
+  for (const [projectName, tasks] of byProject.entries()) {
+    const folder = projectsFolder + projectName + "/";
+    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder));
+
+    // Zoek het beste doelbestand (notes.md > <project>.md > eerste bestand > nieuw aanmaken)
+    let target = files.find((f) => f.basename.toLowerCase() === "notes")
+      ?? files.find((f) => f.basename.toLowerCase() === projectName.toLowerCase())
+      ?? files[0];
+
+    if (!target) {
+      const path = folder + "tasks.md";
+      try { await app.vault.createFolder(folder); } catch { /* bestaat al */ }
+      target = await app.vault.create(path, `# Taken — ${projectName}\n`);
+    }
+
+    let content = await app.vault.read(target);
+    for (const task of tasks) {
+      const status = (task.status as KanbanStatus) ?? "todo";
+      content = appendTaskToContent(content, task.text, status);
+      syncedIds.push(task.id);
+      synced++;
+    }
+    await app.vault.modify(target, content);
+  }
+
+  // Update file_path in Supabase zodat ze niet opnieuw gesynchroniseerd worden
+  if (syncedIds.length > 0) {
+    console.log(`[VaultPilot] syncFromCloud: ${synced} taken naar Obsidian geschreven`);
+  }
+
+  return synced;
 }
